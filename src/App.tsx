@@ -35,6 +35,8 @@ const hotkeys = [
   { key: 'F', action: 'Fly' },
   { key: 'H', action: 'Hitbox' },
   { key: 'U', action: 'Noclip' },
+  { key: 'J', action: 'Silent Aim' },
+  { key: 'K', action: 'Trigger Bot' },
   { key: 'Y', action: 'Toggle GUI' },
   { key: 'P', action: 'Eject' },
   { key: 'RMB', action: 'Lock Target' },
@@ -52,7 +54,7 @@ function App() {
     setTimeout(() => setCopied(null), 2000);
   };
 
-  const loadstringGithub = `loadstring(game:HttpGet("https://raw.githubusercontent.com/SEU_USER/SEU_REPO/main/Utilities_v4_Complete.txt"))()`;
+  const loadstringGithub = `loadstring(game:HttpGet("https://raw.githubusercontent.com/SEU_USER/SEU_REPO/main/Utilities_v5.txt"))()`;
   const loadstringPastebin = `loadstring(game:HttpGet("https://pastebin.com/raw/XXXXXXXX"))()`;
 
   return (
@@ -72,16 +74,17 @@ function App() {
               ⚡
             </div>
             <h1 className="text-5xl font-black bg-gradient-to-r from-teal-400 via-purple-400 to-blue-400 bg-clip-text text-transparent">
-              UTILITIES v4.0
+              UTILITIES v5.0
             </h1>
           </div>
-          <p className="text-gray-400 text-lg mb-2">Full Edition — Glassmorphism Soft UI</p>
+          <p className="text-gray-400 text-lg mb-2">v5.0 — Rectangular UI + Keybind Selector</p>
           <div className="flex items-center justify-center gap-3 flex-wrap">
             <span className="px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-bold">SILENT AIM</span>
             <span className="px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold">TRIGGER BOT</span>
             <span className="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold">PLAYERS TAB</span>
-            <span className="px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-bold">6 TABS</span>
+            <span className="px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-bold">7 TABS</span>
             <span className="px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs font-bold">8 THEMES</span>
+            <span className="px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold">KEYBIND SELECTOR</span>
           </div>
         </header>
 
@@ -385,8 +388,8 @@ function App() {
 
         {/* Footer */}
         <footer className="text-center mt-16 pb-8 text-gray-600 text-sm">
-          <p>Utilities v4.0 Full Edition — Glassmorphism Soft UI</p>
-          <p className="mt-1">Silent Aim • Trigger Bot • Players Tab • 6 Abas • 8 Temas</p>
+          <p>Utilities v5.0 — Rectangular UI + Keybind Selector</p>
+          <p className="mt-1">Silent Aim • Trigger Bot • Players Tab • 7 Tabs • 8 Themes • Custom Keybinds</p>
         </footer>
       </div>
     </div>

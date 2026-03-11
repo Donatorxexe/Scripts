@@ -1,3 +1,13 @@
+-- ══════════════════════════════════════════════════════════
+--  Utilities v5.0 — RECTANGULAR UI + KEYBIND SELECTOR
+--  ✅ GUI retangular limpa (sem cantos arredondados)
+--  ✅ Keybind selector para TODAS as funções
+--  ✅ Aimbot Normal + Silent Aim + Trigger Bot
+--  ✅ Team/Visible/Health Check
+--  ✅ Players Tab (Spectate, Fling, TP)
+--  ✅ ESP, Fly, Hitbox, Noclip
+--  ✅ 8 Temas de cor
+-- ══════════════════════════════════════════════════════════
 
 if not task or not task.wait then
     task = task or {}
@@ -10,7 +20,7 @@ if not task or not task.wait then
     task.cancel = task.cancel or function() end
 end
 
-print("[Utilities] A carregar v4.0 Full Edition...")
+print("[Utilities] Loading v5.0...")
 
 -- ─── SERVICES ──────────────────────────────────────────────
 local Players          = game:GetService("Players")
@@ -28,40 +38,40 @@ local mouse     = player:GetMouse()
 
 -- ─── CONFIG ────────────────────────────────────────────────
 local cfg = {
-    -- Checks
-    teamCheck          = true,
-    visibleCheck        = false,
-    healthCheck        = false,
-    healthMin          = 10,
-
-    -- Hitbox
-    hitboxSize         = 10,   hitboxMin = 1,   hitboxMax = 25,
+    teamCheck       = true,
+    visibleCheck    = false,
+    healthCheck     = false,
+    healthMin       = 10,
+    hitboxSize      = 10,  hitboxMin = 1,  hitboxMax = 25,
     hitboxTransparency = 0.7,
     hitboxRefreshRate  = 0.8,
-
-    -- Fly
-    flySpeed           = 150,  flyMin = 50,     flyMax = 300,
-
-    -- Aimbot
-    aimbotFOV          = 200,  fovMin = 50,     fovMax = 500,
-    aimSmooth          = 20,   smoothMin = 0,   smoothMax = 100,
-    aimbotPart         = "Head",
-    maxDistance         = 500,  distMin = 50,    distMax = 2000,
-
-    -- Silent Aim
-    silentAim          = false,
-
-    -- Trigger Bot
-    triggerBot         = false,
-    triggerDelay       = 0.1,  trigDelayMin = 0.01, trigDelayMax = 1,
-    triggerFOV         = 30,
-
-    -- ESP
+    flySpeed        = 150, flyMin = 50, flyMax = 300,
+    aimbotFOV       = 200, fovMin = 50, fovMax = 500,
+    aimSmooth       = 20,  smoothMin = 0, smoothMax = 100,
+    aimbotPart      = "Head",
+    maxDistance      = 500, distMin = 50, distMax = 2000,
+    silentAim       = false,
+    triggerBot      = false,
+    triggerDelay    = 0.1, trigDelayMin = 0.01, trigDelayMax = 1,
+    triggerFOV      = 30,
     espRefreshInterval = 30,
-
-    -- UI
-    panelOpacity       = 0,
+    panelOpacity    = 0,
 }
+
+-- ─── KEYBINDS (editáveis pelo utilizador) ──────────────────
+local keybinds = {
+    esp     = Enum.KeyCode.T,
+    aimbot  = Enum.KeyCode.G,
+    fly     = Enum.KeyCode.F,
+    hitbox  = Enum.KeyCode.H,
+    noclip  = Enum.KeyCode.U,
+    gui     = Enum.KeyCode.Y,
+    eject   = Enum.KeyCode.P,
+    silent  = Enum.KeyCode.J,
+    trigger = Enum.KeyCode.K,
+}
+
+local waitingForBind = nil -- qual keybind estamos a ouvir
 
 -- ─── STATE ─────────────────────────────────────────────────
 local st = {
@@ -81,61 +91,50 @@ local rmbDown = false
 local activeTab = "status"
 local lastTriggerFire = 0
 
--- ─── COLORS / THEMES ──────────────────────────────────────
+-- ─── COLORS ────────────────────────────────────────────────
 local C = {
-    accent   = Color3.fromRGB(0, 212, 170),
-    bg       = Color3.fromRGB(16, 16, 22),
-    bgCard   = Color3.fromRGB(25, 25, 35),
-    bgDark   = Color3.fromRGB(10, 10, 16),
-    bgGlass  = Color3.fromRGB(30, 30, 42),
-    success  = Color3.fromRGB(34, 197, 94),
-    error    = Color3.fromRGB(239, 68, 68),
-    warning  = Color3.fromRGB(245, 158, 11),
-    aimbot   = Color3.fromRGB(168, 85, 247),
-    fly      = Color3.fromRGB(59, 130, 246),
-    text     = Color3.fromRGB(235, 235, 245),
-    muted    = Color3.fromRGB(120, 120, 140),
-    white    = Color3.fromRGB(255, 255, 255),
-    pink     = Color3.fromRGB(236, 72, 153),
-    cyan     = Color3.fromRGB(6, 182, 212),
-    silent   = Color3.fromRGB(255, 165, 0),
-    trigger  = Color3.fromRGB(255, 85, 85),
-    player   = Color3.fromRGB(100, 200, 255),
+    accent  = Color3.fromRGB(0, 212, 170),
+    bg      = Color3.fromRGB(18, 18, 24),
+    bgCard  = Color3.fromRGB(28, 28, 38),
+    bgDark  = Color3.fromRGB(12, 12, 18),
+    bgInput = Color3.fromRGB(35, 35, 48),
+    success = Color3.fromRGB(34, 197, 94),
+    error   = Color3.fromRGB(239, 68, 68),
+    warning = Color3.fromRGB(245, 158, 11),
+    aimbot  = Color3.fromRGB(168, 85, 247),
+    fly     = Color3.fromRGB(59, 130, 246),
+    text    = Color3.fromRGB(235, 235, 245),
+    muted   = Color3.fromRGB(100, 100, 120),
+    white   = Color3.fromRGB(255, 255, 255),
+    silent  = Color3.fromRGB(255, 165, 0),
+    trigger = Color3.fromRGB(255, 85, 85),
+    border  = Color3.fromRGB(45, 45, 60),
 }
 
 local themes = {
-    { name = "Teal",    color = Color3.fromRGB(0, 212, 170)   },
-    { name = "Purple",  color = Color3.fromRGB(168, 85, 247)  },
-    { name = "Blue",    color = Color3.fromRGB(59, 130, 246)  },
-    { name = "Red",     color = Color3.fromRGB(239, 68, 68)   },
-    { name = "Orange",  color = Color3.fromRGB(245, 158, 11)  },
-    { name = "Green",   color = Color3.fromRGB(34, 197, 94)   },
-    { name = "Pink",    color = Color3.fromRGB(236, 72, 153)  },
-    { name = "Cyan",    color = Color3.fromRGB(6, 182, 212)   },
+    { name = "Teal",   color = Color3.fromRGB(0, 212, 170)  },
+    { name = "Purple", color = Color3.fromRGB(168, 85, 247) },
+    { name = "Blue",   color = Color3.fromRGB(59, 130, 246) },
+    { name = "Red",    color = Color3.fromRGB(239, 68, 68)  },
+    { name = "Orange", color = Color3.fromRGB(245, 158, 11) },
+    { name = "Green",  color = Color3.fromRGB(34, 197, 94)  },
+    { name = "Pink",   color = Color3.fromRGB(236, 72, 153) },
+    { name = "Cyan",   color = Color3.fromRGB(6, 182, 212)  },
 }
 
 -- ─── TWEEN HELPERS ─────────────────────────────────────────
-local function tween(inst, props, duration, style, dir)
-    duration = duration or 0.3
+local function tween(inst, props, dur, style, dir)
+    dur = dur or 0.25
     style = style or Enum.EasingStyle.Quint
     dir = dir or Enum.EasingDirection.Out
-    local ti = TweenInfo.new(duration, style, dir)
-    local tw = TweenService:Create(inst, ti, props)
+    local tw = TweenService:Create(inst, TweenInfo.new(dur, style, dir), props)
     tw:Play()
     return tw
 end
 
-local function tweenSpring(inst, props, duration)
-    return tween(inst, props, duration or 0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-end
-
-local function tweenSmooth(inst, props, duration)
-    return tween(inst, props, duration or 0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-end
-
--- ─── CLEANUP OLD ───────────────────────────────────────────
+-- ─── CLEANUP OLD GUI ───────────────────────────────────────
 for _, c in ipairs(playerGui:GetChildren()) do
-    if c.Name == "UtilityGUI" or c.Name == "UtilityGUI_v3" or c.Name == "UtilityGUI_v4" then c:Destroy() end
+    if c.Name:match("^UtilityGUI") then c:Destroy() end
 end
 
 -- ══════════════════════════════════════════════════════════
@@ -148,94 +147,46 @@ local function notify(txt, color, icon)
     color = color or C.accent
     icon = icon or "⚡"
     notifCount = notifCount + 1
-    local idx = notifCount
 
     local sg = Instance.new("ScreenGui")
-    sg.Name = "Notif_" .. idx
+    sg.Name = "Notif_" .. notifCount
     sg.ResetOnSpawn = false
     sg.DisplayOrder = 1001
     sg.Parent = playerGui
 
     local fr = Instance.new("Frame")
-    fr.Size = UDim2.new(0, 280, 0, 60)
-    fr.Position = UDim2.new(1, 300, 1, -80 - (#notifQueue * 70))
+    fr.Size = UDim2.new(0, 260, 0, 48)
+    fr.Position = UDim2.new(1, 280, 1, -60 - (#notifQueue * 56))
     fr.BackgroundColor3 = C.bgDark
-    fr.BackgroundTransparency = 0.08
-    fr.BorderSizePixel = 0
+    fr.BorderSizePixel = 1
+    fr.BorderColor3 = C.border
     fr.Parent = sg
-    Instance.new("UICorner", fr).CornerRadius = UDim.new(0, 14)
 
+    -- left accent bar
     local bar = Instance.new("Frame")
-    bar.Size = UDim2.new(0, 4, 0.7, 0)
-    bar.Position = UDim2.new(0, 8, 0.15, 0)
+    bar.Size = UDim2.new(0, 3, 1, 0)
     bar.BackgroundColor3 = color
     bar.BorderSizePixel = 0
     bar.Parent = fr
-    Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
-
-    local barGlow = Instance.new("Frame")
-    barGlow.Size = UDim2.new(0, 12, 0.7, 0)
-    barGlow.Position = UDim2.new(0, 5, 0.15, 0)
-    barGlow.BackgroundColor3 = color
-    barGlow.BackgroundTransparency = 0.7
-    barGlow.BorderSizePixel = 0
-    barGlow.Parent = fr
-    Instance.new("UICorner", barGlow).CornerRadius = UDim.new(1, 0)
-
-    local sk = Instance.new("UIStroke", fr)
-    sk.Thickness = 1.5
-    sk.Color = color
-    sk.Transparency = 0.6
-
-    local iconLbl = Instance.new("TextLabel")
-    iconLbl.Size = UDim2.new(0, 28, 0, 28)
-    iconLbl.Position = UDim2.new(0, 22, 0.5, -14)
-    iconLbl.BackgroundTransparency = 1
-    iconLbl.Font = Enum.Font.GothamBold
-    iconLbl.TextSize = 18
-    iconLbl.TextColor3 = color
-    iconLbl.Text = icon
-    iconLbl.Parent = fr
 
     local lb = Instance.new("TextLabel")
-    lb.Size = UDim2.new(1, -62, 1, -16)
-    lb.Position = UDim2.new(0, 54, 0, 8)
+    lb.Size = UDim2.new(1, -14, 1, 0)
+    lb.Position = UDim2.new(0, 14, 0, 0)
     lb.BackgroundTransparency = 1
-    lb.Text = txt
+    lb.Text = icon .. "  " .. txt
     lb.Font = Enum.Font.GothamSemibold
-    lb.TextSize = 13
+    lb.TextSize = 12
     lb.TextColor3 = C.text
     lb.TextXAlignment = Enum.TextXAlignment.Left
     lb.TextWrapped = true
     lb.Parent = fr
 
-    local prog = Instance.new("Frame")
-    prog.Size = UDim2.new(1, -16, 0, 3)
-    prog.Position = UDim2.new(0, 8, 1, -8)
-    prog.BackgroundColor3 = color
-    prog.BackgroundTransparency = 0.3
-    prog.BorderSizePixel = 0
-    prog.Parent = fr
-    Instance.new("UICorner", prog).CornerRadius = UDim.new(1, 0)
-
     table.insert(notifQueue, sg)
+    tween(fr, {Position = UDim2.new(1, -280, 1, -60 - ((#notifQueue - 1) * 56))}, 0.35)
 
-    tweenSpring(fr, { Position = UDim2.new(1, -300, 1, -80 - ((#notifQueue - 1) * 70)) }, 0.5)
-    tween(prog, { Size = UDim2.new(0, 0, 0, 3) }, 2.8, Enum.EasingStyle.Linear)
-
-    task.spawn(function()
-        for _ = 1, 2 do
-            tween(iconLbl, { TextTransparency = 0.4 }, 0.3)
-            task.wait(0.3)
-            tween(iconLbl, { TextTransparency = 0 }, 0.3)
-            task.wait(0.3)
-        end
-    end)
-
-    task.delay(3, function()
-        tween(fr, { Position = UDim2.new(1, 300, fr.Position.Y.Scale, fr.Position.Y.Offset) }, 0.35, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-        tween(sk, { Transparency = 1 }, 0.3)
-        task.wait(0.45)
+    task.delay(2.5, function()
+        tween(fr, {Position = UDim2.new(1, 280, fr.Position.Y.Scale, fr.Position.Y.Offset)}, 0.3)
+        task.wait(0.35)
         for i, v in ipairs(notifQueue) do
             if v == sg then table.remove(notifQueue, i) break end
         end
@@ -244,238 +195,167 @@ local function notify(txt, color, icon)
 end
 
 -- ══════════════════════════════════════════════════════════
---  MAIN GUI — Glassmorphism Panel
+--  MAIN GUI — RECTANGULAR FLAT DESIGN
 -- ══════════════════════════════════════════════════════════
-local PANEL_W, PANEL_H = 360, 660
-local MIN_W, MIN_H = 320, 480
-local MAX_W, MAX_H = 600, 900
+local PANEL_W, PANEL_H = 380, 520
 
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "UtilityGUI_v4"
+screenGui.Name = "UtilityGUI_v5"
 screenGui.ResetOnSpawn = false
 screenGui.DisplayOrder = 999
 screenGui.Parent = playerGui
-
--- Outer glow
-local glowOuter = Instance.new("Frame")
-glowOuter.Name = "GlowOuter"
-glowOuter.Size = UDim2.new(0, PANEL_W + 8, 0, PANEL_H + 8)
-glowOuter.Position = UDim2.new(1, -(PANEL_W + 24), 0.5, -(PANEL_H / 2 + 4))
-glowOuter.BackgroundColor3 = C.accent
-glowOuter.BackgroundTransparency = 0.85
-glowOuter.BorderSizePixel = 0
-glowOuter.Parent = screenGui
-Instance.new("UICorner", glowOuter).CornerRadius = UDim.new(0, 24)
 
 local panel = Instance.new("Frame")
 panel.Name = "MainPanel"
 panel.Size = UDim2.new(0, PANEL_W, 0, PANEL_H)
 panel.Position = UDim2.new(1, -(PANEL_W + 20), 0.5, -PANEL_H / 2)
 panel.BackgroundColor3 = C.bg
-panel.BackgroundTransparency = 0.05
-panel.BorderSizePixel = 0
+panel.BorderSizePixel = 1
+panel.BorderColor3 = C.border
 panel.ClipsDescendants = true
 panel.Parent = screenGui
-Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 20)
-
--- Glass overlay
-local glassOverlay = Instance.new("Frame")
-glassOverlay.Size = UDim2.new(1, 0, 1, 0)
-glassOverlay.BackgroundColor3 = C.white
-glassOverlay.BackgroundTransparency = 0.96
-glassOverlay.BorderSizePixel = 0
-glassOverlay.ZIndex = 0
-glassOverlay.Parent = panel
-Instance.new("UICorner", glassOverlay).CornerRadius = UDim.new(0, 20)
-local glassGrad = Instance.new("UIGradient", glassOverlay)
-glassGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(180, 180, 200)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 100, 120))
-})
-glassGrad.Rotation = 135
-
-local pStroke = Instance.new("UIStroke", panel)
-pStroke.Color = C.accent
-pStroke.Thickness = 2
-pStroke.Transparency = 0.5
-
-local pGrad = Instance.new("UIGradient", panel)
-pGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, C.bg),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 30))
-})
-pGrad.Rotation = 160
-
--- Glow border animation
-local glowStroke = Instance.new("UIStroke", glowOuter)
-glowStroke.Thickness = 3
-glowStroke.Color = C.accent
-glowStroke.Transparency = 0.6
-
-task.spawn(function()
-    local t = 0
-    while st.running do
-        t = t + 0.02
-        local pulse = math.sin(t * 2) * 0.15 + 0.75
-        pcall(function()
-            glowOuter.BackgroundTransparency = pulse
-            glowStroke.Transparency = pulse - 0.15
-        end)
-        RunService.RenderStepped:Wait()
-    end
-end)
 
 -- ══════════════════════════════════════════════════════════
---  TOP BAR
+--  TOP BAR (draggable)
 -- ══════════════════════════════════════════════════════════
 local topBar = Instance.new("Frame")
-topBar.Size = UDim2.new(1, 0, 0, 56)
+topBar.Size = UDim2.new(1, 0, 0, 32)
 topBar.BackgroundColor3 = C.bgDark
-topBar.BackgroundTransparency = 0.2
 topBar.BorderSizePixel = 0
 topBar.ZIndex = 10
 topBar.Parent = panel
-Instance.new("UICorner", topBar).CornerRadius = UDim.new(0, 20)
 
-local tbFix = Instance.new("Frame")
-tbFix.Size = UDim2.new(1, 0, 0, 20)
-tbFix.Position = UDim2.new(0, 0, 0, 36)
-tbFix.BackgroundColor3 = C.bgDark
-tbFix.BackgroundTransparency = 0.2
-tbFix.BorderSizePixel = 0
-tbFix.ZIndex = 9
-tbFix.Parent = topBar
-
-local tbLine = Instance.new("Frame")
-tbLine.Size = UDim2.new(1, -32, 0, 2)
-tbLine.Position = UDim2.new(0, 16, 0, 54)
-tbLine.BackgroundColor3 = C.accent
-tbLine.BackgroundTransparency = 0.4
-tbLine.BorderSizePixel = 0
-tbLine.ZIndex = 11
-tbLine.Parent = topBar
-Instance.new("UICorner", tbLine).CornerRadius = UDim.new(1, 0)
-
-local tbLineGlow = Instance.new("Frame")
-tbLineGlow.Size = UDim2.new(1, -28, 0, 6)
-tbLineGlow.Position = UDim2.new(0, 14, 0, 52)
-tbLineGlow.BackgroundColor3 = C.accent
-tbLineGlow.BackgroundTransparency = 0.8
-tbLineGlow.BorderSizePixel = 0
-tbLineGlow.ZIndex = 10
-tbLineGlow.Parent = topBar
-Instance.new("UICorner", tbLineGlow).CornerRadius = UDim.new(1, 0)
+-- accent line at top
+local topLine = Instance.new("Frame")
+topLine.Size = UDim2.new(1, 0, 0, 2)
+topLine.BackgroundColor3 = C.accent
+topLine.BorderSizePixel = 0
+topLine.ZIndex = 11
+topLine.Parent = topBar
 
 local titleLbl = Instance.new("TextLabel")
-titleLbl.Size = UDim2.new(0, 140, 0, 30)
-titleLbl.Position = UDim2.new(0, 18, 0, 6)
+titleLbl.Size = UDim2.new(0, 200, 1, 0)
+titleLbl.Position = UDim2.new(0, 10, 0, 0)
 titleLbl.BackgroundTransparency = 1
 titleLbl.Font = Enum.Font.GothamBold
-titleLbl.TextSize = 22
+titleLbl.TextSize = 14
 titleLbl.TextColor3 = C.text
 titleLbl.TextXAlignment = Enum.TextXAlignment.Left
-titleLbl.Text = "UTILITIES"
+titleLbl.Text = "UTILITIES v5.0"
 titleLbl.ZIndex = 12
 titleLbl.Parent = topBar
 
-local subLbl = Instance.new("TextLabel")
-subLbl.Size = UDim2.new(0, 140, 0, 16)
-subLbl.Position = UDim2.new(0, 18, 0, 33)
-subLbl.BackgroundTransparency = 1
-subLbl.Font = Enum.Font.Gotham
-subLbl.TextSize = 10
-subLbl.TextColor3 = C.muted
-subLbl.TextXAlignment = Enum.TextXAlignment.Left
-subLbl.Text = "v4.0 Full Edition"
-subLbl.ZIndex = 12
-subLbl.Parent = topBar
+local closeLbl = Instance.new("TextButton")
+closeLbl.Size = UDim2.new(0, 32, 0, 32)
+closeLbl.Position = UDim2.new(1, -32, 0, 0)
+closeLbl.BackgroundTransparency = 1
+closeLbl.Font = Enum.Font.GothamBold
+closeLbl.TextSize = 16
+closeLbl.TextColor3 = C.muted
+closeLbl.Text = "×"
+closeLbl.ZIndex = 12
+closeLbl.AutoButtonColor = false
+closeLbl.Parent = topBar
+closeLbl.MouseEnter:Connect(function() tween(closeLbl, {TextColor3 = C.error}, 0.15) end)
+closeLbl.MouseLeave:Connect(function() tween(closeLbl, {TextColor3 = C.muted}, 0.15) end)
 
-local verBadge = Instance.new("Frame")
-verBadge.Size = UDim2.new(0, 52, 0, 24)
-verBadge.Position = UDim2.new(1, -66, 0, 16)
-verBadge.BackgroundColor3 = C.accent
-verBadge.BackgroundTransparency = 0.8
-verBadge.BorderSizePixel = 0
-verBadge.ZIndex = 12
-verBadge.Parent = topBar
-Instance.new("UICorner", verBadge).CornerRadius = UDim.new(0, 8)
-local vbSk = Instance.new("UIStroke", verBadge)
-vbSk.Color = C.accent
-vbSk.Transparency = 0.3
-vbSk.Thickness = 1
+local minLbl = Instance.new("TextButton")
+minLbl.Size = UDim2.new(0, 32, 0, 32)
+minLbl.Position = UDim2.new(1, -60, 0, 0)
+minLbl.BackgroundTransparency = 1
+minLbl.Font = Enum.Font.GothamBold
+minLbl.TextSize = 16
+minLbl.TextColor3 = C.muted
+minLbl.Text = "—"
+minLbl.ZIndex = 12
+minLbl.AutoButtonColor = false
+minLbl.Parent = topBar
+minLbl.MouseEnter:Connect(function() tween(minLbl, {TextColor3 = C.warning}, 0.15) end)
+minLbl.MouseLeave:Connect(function() tween(minLbl, {TextColor3 = C.muted}, 0.15) end)
 
-local verLbl = Instance.new("TextLabel")
-verLbl.Size = UDim2.new(1, 0, 1, 0)
-verLbl.BackgroundTransparency = 1
-verLbl.Font = Enum.Font.GothamBold
-verLbl.TextSize = 11
-verLbl.TextColor3 = C.accent
-verLbl.Text = "v4.0"
-verLbl.ZIndex = 13
-verLbl.Parent = verBadge
+-- Drag logic
+do
+    local dragging, dragStart, startPos = false, nil, nil
+    topBar.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true; dragStart = i.Position; startPos = panel.Position
+        end
+    end)
+    topBar.InputEnded:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    end)
+    UserInputService.InputChanged:Connect(function(i)
+        if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
+            local d = i.Position - dragStart
+            local target = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+            tween(panel, {Position = target}, 0.06)
+        end
+    end)
+end
 
 -- ══════════════════════════════════════════════════════════
---  TAB BAR (6 abas)
+--  SIDEBAR TABS (left side, vertical)
 -- ══════════════════════════════════════════════════════════
-local TAB_BAR_Y = 62
-local tabBar = Instance.new("Frame")
-tabBar.Size = UDim2.new(1, -16, 0, 36)
-tabBar.Position = UDim2.new(0, 8, 0, TAB_BAR_Y)
-tabBar.BackgroundColor3 = C.bgDark
-tabBar.BackgroundTransparency = 0.4
-tabBar.BorderSizePixel = 0
-tabBar.ZIndex = 8
-tabBar.Parent = panel
-Instance.new("UICorner", tabBar).CornerRadius = UDim.new(0, 10)
+local SIDEBAR_W = 36
+local sidebar = Instance.new("Frame")
+sidebar.Size = UDim2.new(0, SIDEBAR_W, 1, -32)
+sidebar.Position = UDim2.new(0, 0, 0, 32)
+sidebar.BackgroundColor3 = C.bgDark
+sidebar.BorderSizePixel = 0
+sidebar.ZIndex = 8
+sidebar.Parent = panel
 
-local tabNames = {"Status", "Config", "Aimbot", "Players", "Actions", "Style"}
+-- sidebar right border
+local sbBorder = Instance.new("Frame")
+sbBorder.Size = UDim2.new(0, 1, 1, 0)
+sbBorder.Position = UDim2.new(1, 0, 0, 0)
+sbBorder.BackgroundColor3 = C.border
+sbBorder.BorderSizePixel = 0
+sbBorder.ZIndex = 9
+sbBorder.Parent = sidebar
+
+local tabDefs = {
+    {name = "status",  icon = "📊"},
+    {name = "config",  icon = "⚙️"},
+    {name = "aimbot",  icon = "🎯"},
+    {name = "players", icon = "👥"},
+    {name = "actions", icon = "⚡"},
+    {name = "binds",   icon = "🎮"},
+    {name = "style",   icon = "🎨"},
+}
+
 local tabBtns = {}
 local tabContents = {}
-
-local TAB_W = (PANEL_W - 16) / #tabNames
-
--- Tab indicator (sliding bar)
 local tabIndicator = Instance.new("Frame")
-tabIndicator.Size = UDim2.new(0, TAB_W - 8, 0, 3)
-tabIndicator.Position = UDim2.new(0, 4, 1, -5)
+tabIndicator.Size = UDim2.new(0, 3, 0, 28)
+tabIndicator.Position = UDim2.new(0, 0, 0, 6)
 tabIndicator.BackgroundColor3 = C.accent
 tabIndicator.BorderSizePixel = 0
-tabIndicator.ZIndex = 9
-tabIndicator.Parent = tabBar
-Instance.new("UICorner", tabIndicator).CornerRadius = UDim.new(1, 0)
+tabIndicator.ZIndex = 10
+tabIndicator.Parent = sidebar
 
-local tabGlow = Instance.new("Frame")
-tabGlow.Size = UDim2.new(0, TAB_W - 4, 0, 8)
-tabGlow.Position = UDim2.new(0, 2, 1, -7)
-tabGlow.BackgroundColor3 = C.accent
-tabGlow.BackgroundTransparency = 0.75
-tabGlow.BorderSizePixel = 0
-tabGlow.ZIndex = 8
-tabGlow.Parent = tabBar
-Instance.new("UICorner", tabGlow).CornerRadius = UDim.new(1, 0)
+local CONTENT_X = SIDEBAR_W + 1
 
-local CONTENT_Y = TAB_BAR_Y + 42
-
-for idx, name in ipairs(tabNames) do
+-- Create tab buttons in sidebar
+for idx, td in ipairs(tabDefs) do
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, TAB_W, 1, 0)
-    btn.Position = UDim2.new(0, (idx - 1) * TAB_W, 0, 0)
+    btn.Size = UDim2.new(1, 0, 0, 34)
+    btn.Position = UDim2.new(0, 0, 0, (idx - 1) * 34 + 4)
     btn.BackgroundTransparency = 1
     btn.BorderSizePixel = 0
     btn.AutoButtonColor = false
-    btn.Font = Enum.Font.GothamSemibold
-    btn.TextSize = 10
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
     btn.TextColor3 = idx == 1 and C.accent or C.muted
-    btn.Text = name
+    btn.Text = td.icon
     btn.ZIndex = 9
-    btn.Parent = tabBar
-    tabBtns[name:lower()] = btn
+    btn.Parent = sidebar
+    tabBtns[td.name] = btn
 
-    -- Tab content (ScrollingFrame)
+    -- Create content area
     local scroll = Instance.new("ScrollingFrame")
-    scroll.Size = UDim2.new(1, -12, 1, -(CONTENT_Y + 6))
-    scroll.Position = UDim2.new(0, 6, 0, CONTENT_Y)
+    scroll.Size = UDim2.new(1, -(CONTENT_X + 4), 1, -36)
+    scroll.Position = UDim2.new(0, CONTENT_X + 2, 0, 34)
     scroll.BackgroundTransparency = 1
     scroll.BorderSizePixel = 0
     scroll.ScrollBarThickness = 3
@@ -483,52 +363,55 @@ for idx, name in ipairs(tabNames) do
     scroll.ScrollBarImageTransparency = 0.5
     scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
     scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    scroll.Visible = (idx == 1)
+    scroll.Visible = (td.name == "status")
+    scroll.ZIndex = 5
     scroll.Parent = panel
-    tabContents[name:lower()] = scroll
+    tabContents[td.name] = scroll
 
-    local inner = Instance.new("Frame")
-    inner.Name = "Inner"
-    inner.Size = UDim2.new(1, -8, 0, 0)
-    inner.AutomaticSize = Enum.AutomaticSize.Y
-    inner.BackgroundTransparency = 1
-    inner.Parent = scroll
+    local contentFrame = Instance.new("Frame")
+    contentFrame.Name = "Inner"
+    contentFrame.Size = UDim2.new(1, -8, 0, 0)
+    contentFrame.AutomaticSize = Enum.AutomaticSize.Y
+    contentFrame.BackgroundTransparency = 1
+    contentFrame.Parent = scroll
 
-    local ll = Instance.new("UIListLayout", inner)
-    ll.Padding = UDim.new(0, 10)
+    local ll = Instance.new("UIListLayout", contentFrame)
+    ll.Padding = UDim.new(0, 6)
     ll.SortOrder = Enum.SortOrder.LayoutOrder
 
-    local pd = Instance.new("UIPadding", inner)
-    pd.PaddingLeft = UDim.new(0, 4)
-    pd.PaddingRight = UDim.new(0, 4)
-    pd.PaddingTop = UDim.new(0, 4)
-    pd.PaddingBottom = UDim.new(0, 10)
+    local pad = Instance.new("UIPadding", contentFrame)
+    pad.PaddingTop = UDim.new(0, 4)
+    pad.PaddingBottom = UDim.new(0, 6)
+    pad.PaddingLeft = UDim.new(0, 4)
+    pad.PaddingRight = UDim.new(0, 4)
 end
 
--- Tab switch
+-- Switch tab function
 local function switchTab(name)
-    activeTab = name:lower()
-    for tName, content in pairs(tabContents) do
-        content.Visible = (tName == activeTab)
+    activeTab = name
+    for tname, scroll in pairs(tabContents) do
+        scroll.Visible = (tname == name)
     end
-    for tName, btn in pairs(tabBtns) do
-        tweenSmooth(btn, { TextColor3 = tName == activeTab and C.accent or C.muted }, 0.2)
+    for tname, btn in pairs(tabBtns) do
+        tween(btn, {TextColor3 = tname == name and C.accent or C.muted}, 0.15)
     end
-    local idx = 0
-    for i, n in ipairs(tabNames) do
-        if n:lower() == activeTab then idx = i - 1; break end
+    -- Move indicator
+    for idx, td in ipairs(tabDefs) do
+        if td.name == name then
+            tween(tabIndicator, {Position = UDim2.new(0, 0, 0, (idx - 1) * 34 + 7)}, 0.2)
+            break
+        end
     end
-    tweenSmooth(tabIndicator, { Position = UDim2.new(0, idx * TAB_W + 4, 1, -5) }, 0.3)
-    tweenSmooth(tabGlow, { Position = UDim2.new(0, idx * TAB_W + 2, 1, -7) }, 0.3)
 end
 
-for _, name in ipairs(tabNames) do
-    tabBtns[name:lower()].MouseButton1Click:Connect(function()
-        switchTab(name)
-    end)
+for _, td in ipairs(tabDefs) do
+    local nm = td.name
+    tabBtns[nm].MouseButton1Click:Connect(function() switchTab(nm) end)
 end
 
--- ─── UI helpers ────────────────────────────────────────────
+-- ══════════════════════════════════════════════════════════
+--  UI BUILDER HELPERS
+-- ══════════════════════════════════════════════════════════
 local function getInner(tabName)
     return tabContents[tabName]:FindFirstChild("Inner")
 end
@@ -537,161 +420,152 @@ local function mkCard(parent, h, order)
     local c = Instance.new("Frame")
     c.Size = UDim2.new(1, 0, 0, h)
     c.BackgroundColor3 = C.bgCard
-    c.BackgroundTransparency = 0.15
-    c.BorderSizePixel = 0
+    c.BorderSizePixel = 1
+    c.BorderColor3 = C.border
     c.LayoutOrder = order or 0
+    c.ClipsDescendants = true
     c.Parent = parent
-    Instance.new("UICorner", c).CornerRadius = UDim.new(0, 14)
-    local sk = Instance.new("UIStroke", c)
-    sk.Color = C.white
-    sk.Transparency = 0.92
     return c
 end
 
-local function mkLabel(parent, txt, size, color, x, y, w, h, xalign, zidx)
+local function mkLabel(parent, txt, size, color, x, y, bold)
     local l = Instance.new("TextLabel")
-    l.Size = UDim2.new(w or 1, -((w or 1) == 1 and 20 or 0), 0, h or 20)
-    l.Position = UDim2.new(0, x or 14, 0, y or 10)
+    l.Size = UDim2.new(1, -x * 2, 0, 16)
+    l.Position = UDim2.new(0, x, 0, y)
     l.BackgroundTransparency = 1
-    l.Font = Enum.Font.GothamSemibold
-    l.TextSize = size or 12
+    l.Font = bold and Enum.Font.GothamBold or Enum.Font.GothamSemibold
+    l.TextSize = size or 11
     l.TextColor3 = color or C.muted
-    l.TextXAlignment = xalign or Enum.TextXAlignment.Left
+    l.TextXAlignment = Enum.TextXAlignment.Left
     l.Text = txt
-    if zidx then l.ZIndex = zidx end
     l.Parent = parent
     return l
 end
 
--- ─── Toggle builder ────────────────────────────────────────
-local function mkToggle(parent, labelTxt, initVal, order, onChange)
+-- ── Toggle builder ─────────────────────────────────────────
+local function mkToggle(parent, labelTxt, initial, color, order, onChange)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, 0, 0, 36)
+    row.Size = UDim2.new(1, 0, 0, 30)
     row.BackgroundColor3 = C.bgCard
-    row.BackgroundTransparency = 0.15
-    row.BorderSizePixel = 0
-    row.LayoutOrder = order or 0
+    row.BorderSizePixel = 1
+    row.BorderColor3 = C.border
+    row.LayoutOrder = order
     row.Parent = parent
-    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 10)
 
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -70, 1, 0)
-    lbl.Position = UDim2.new(0, 14, 0, 0)
+    lbl.Size = UDim2.new(1, -60, 1, 0)
+    lbl.Position = UDim2.new(0, 8, 0, 0)
     lbl.BackgroundTransparency = 1
-    lbl.Font = Enum.Font.GothamMedium
-    lbl.TextSize = 13
+    lbl.Font = Enum.Font.GothamSemibold
+    lbl.TextSize = 11
     lbl.TextColor3 = C.text
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.Text = labelTxt
     lbl.Parent = row
 
+    -- Toggle track
     local track = Instance.new("Frame")
-    track.Size = UDim2.new(0, 44, 0, 22)
-    track.Position = UDim2.new(1, -56, 0.5, -11)
-    track.BackgroundColor3 = initVal and C.accent or C.muted
-    track.BackgroundTransparency = initVal and 0.3 or 0.6
-    track.BorderSizePixel = 0
+    track.Size = UDim2.new(0, 36, 0, 18)
+    track.Position = UDim2.new(1, -48, 0.5, -9)
+    track.BackgroundColor3 = initial and color or C.bgDark
+    track.BorderSizePixel = 1
+    track.BorderColor3 = C.border
     track.Parent = row
-    Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
 
     local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 18, 0, 18)
-    knob.Position = initVal and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
+    knob.Size = UDim2.new(0, 14, 0, 14)
+    knob.Position = initial and UDim2.new(0, 20, 0, 2) or UDim2.new(0, 2, 0, 2)
     knob.BackgroundColor3 = C.white
     knob.BorderSizePixel = 0
+    knob.ZIndex = 2
     knob.Parent = track
-    Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
-    local val = initVal
+    local state = initial
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Size = UDim2.new(1, 0, 1, 0)
+    toggleBtn.BackgroundTransparency = 1
+    toggleBtn.Text = ""
+    toggleBtn.ZIndex = 3
+    toggleBtn.Parent = row
 
-    local function updateVisual()
-        tweenSmooth(track, {
-            BackgroundColor3 = val and C.accent or C.muted,
-            BackgroundTransparency = val and 0.3 or 0.6
-        }, 0.2)
-        tweenSpring(knob, {
-            Position = val and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
-        }, 0.3)
-    end
-
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 1, 0)
-    btn.BackgroundTransparency = 1
-    btn.Text = ""
-    btn.Parent = row
-
-    btn.MouseButton1Click:Connect(function()
-        val = not val
-        updateVisual()
-        if onChange then onChange(val) end
+    toggleBtn.MouseButton1Click:Connect(function()
+        state = not state
+        tween(track, {BackgroundColor3 = state and color or C.bgDark}, 0.2)
+        tween(knob, {Position = state and UDim2.new(0, 20, 0, 2) or UDim2.new(0, 2, 0, 2)}, 0.2)
+        onChange(state)
     end)
 
-    return row, function() return val end, function(v) val = v; updateVisual() end
+    return {row = row, track = track, knob = knob, setState = function(v)
+        state = v
+        tween(track, {BackgroundColor3 = state and color or C.bgDark}, 0.2)
+        tween(knob, {Position = state and UDim2.new(0, 20, 0, 2) or UDim2.new(0, 2, 0, 2)}, 0.2)
+    end}
 end
 
--- ─── Slider builder ────────────────────────────────────────
-local function mkSlider(parent, labelTxt, initVal, minV, maxV, order, onChange, formatFn)
-    local SLIDER_H = 52
+-- ── Slider builder ─────────────────────────────────────────
+local function mkSlider(parent, labelTxt, initVal, minV, maxV, order, onChange)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, 0, 0, SLIDER_H)
+    row.Size = UDim2.new(1, 0, 0, 42)
     row.BackgroundColor3 = C.bgCard
-    row.BackgroundTransparency = 0.15
-    row.BorderSizePixel = 0
-    row.LayoutOrder = order or 0
+    row.BorderSizePixel = 1
+    row.BorderColor3 = C.border
+    row.LayoutOrder = order
     row.ClipsDescendants = false
     row.Parent = parent
-    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 10)
-
-    local fmtFn = formatFn or function(v) return labelTxt .. " " .. v end
 
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -20, 0, 20)
-    lbl.Position = UDim2.new(0, 14, 0, 4)
+    lbl.Size = UDim2.new(1, -16, 0, 16)
+    lbl.Position = UDim2.new(0, 8, 0, 3)
     lbl.BackgroundTransparency = 1
-    lbl.Font = Enum.Font.GothamMedium
-    lbl.TextSize = 12
+    lbl.Font = Enum.Font.GothamSemibold
+    lbl.TextSize = 10
     lbl.TextColor3 = C.text
     lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Text = fmtFn(initVal)
+    lbl.Text = labelTxt
     lbl.Parent = row
 
-    local trackF = Instance.new("Frame")
-    trackF.Size = UDim2.new(1, -28, 0, 12)
-    trackF.Position = UDim2.new(0, 14, 0, 30)
-    trackF.BackgroundColor3 = C.bgDark
-    trackF.BorderSizePixel = 0
-    trackF.ClipsDescendants = false
-    trackF.Parent = row
-    Instance.new("UICorner", trackF).CornerRadius = UDim.new(1, 0)
+    local valLbl = Instance.new("TextLabel")
+    valLbl.Size = UDim2.new(0, 40, 0, 16)
+    valLbl.Position = UDim2.new(1, -48, 0, 3)
+    valLbl.BackgroundTransparency = 1
+    valLbl.Font = Enum.Font.GothamBold
+    valLbl.TextSize = 10
+    valLbl.TextColor3 = C.accent
+    valLbl.TextXAlignment = Enum.TextXAlignment.Right
+    valLbl.Text = tostring(initVal)
+    valLbl.Parent = row
+
+    local track = Instance.new("Frame")
+    track.Size = UDim2.new(1, -16, 0, 8)
+    track.Position = UDim2.new(0, 8, 0, 24)
+    track.BackgroundColor3 = C.bgDark
+    track.BorderSizePixel = 1
+    track.BorderColor3 = C.border
+    track.ClipsDescendants = false
+    track.Parent = row
 
     local pct = (initVal - minV) / (maxV - minV)
     local fill = Instance.new("Frame")
     fill.Size = UDim2.new(pct, 0, 1, 0)
     fill.BackgroundColor3 = C.accent
     fill.BorderSizePixel = 0
-    fill.ClipsDescendants = false
-    fill.Parent = trackF
-    Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+    fill.Parent = track
 
-    local knobF = Instance.new("Frame")
-    knobF.Size = UDim2.new(0, 18, 0, 18)
-    knobF.AnchorPoint = Vector2.new(0.5, 0.5)
-    knobF.Position = UDim2.new(pct, 0, 0.5, 0)
-    knobF.BackgroundColor3 = C.white
-    knobF.BorderSizePixel = 0
-    knobF.ZIndex = 10
-    knobF.ClipsDescendants = false
-    knobF.Parent = trackF
-    Instance.new("UICorner", knobF).CornerRadius = UDim.new(1, 0)
-    local ksk = Instance.new("UIStroke", knobF)
-    ksk.Color = C.accent
-    ksk.Thickness = 2
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.new(0, 12, 0, 14)
+    knob.AnchorPoint = Vector2.new(0.5, 0.5)
+    knob.Position = UDim2.new(pct, 0, 0.5, 0)
+    knob.BackgroundColor3 = C.white
+    knob.BorderSizePixel = 1
+    knob.BorderColor3 = C.accent
+    knob.ZIndex = 6
+    knob.Parent = track
 
     local dragging = false
 
     local function applyPos(mouseX)
-        local bx = trackF.AbsolutePosition.X
-        local bw = trackF.AbsoluteSize.X
+        local bx = track.AbsolutePosition.X
+        local bw = track.AbsoluteSize.X
         if bw <= 0 then return end
         local p = math.clamp((mouseX - bx) / bw, 0, 1)
         local val
@@ -701,19 +575,18 @@ local function mkSlider(parent, labelTxt, initVal, minV, maxV, order, onChange, 
         else
             val = math.floor(minV + p * (maxV - minV))
         end
-        tweenSmooth(fill, { Size = UDim2.new(p, 0, 1, 0) }, 0.06)
-        tweenSmooth(knobF, { Position = UDim2.new(p, 0, 0.5, 0) }, 0.06)
-        lbl.Text = fmtFn(val)
-        if onChange then onChange(val) end
+        fill.Size = UDim2.new(p, 0, 1, 0)
+        knob.Position = UDim2.new(p, 0, 0.5, 0)
+        valLbl.Text = tostring(val)
+        onChange(val, lbl)
     end
 
-    trackF.InputBegan:Connect(function(i)
+    track.InputBegan:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            applyPos(i.Position.X)
+            dragging = true; applyPos(i.Position.X)
         end
     end)
-    knobF.InputBegan:Connect(function(i)
+    knob.InputBegan:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end
     end)
     UserInputService.InputChanged:Connect(function(i)
@@ -725,783 +598,629 @@ local function mkSlider(parent, labelTxt, initVal, minV, maxV, order, onChange, 
         if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
     end)
 
-    return row, lbl
+    return lbl, valLbl
 end
 
--- ─── Action button builder ─────────────────────────────────
+-- ── Action button builder ──────────────────────────────────
 local function mkActionBtn(parent, txt, color, order)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 40)
-    btn.LayoutOrder = order or 0
-    btn.BackgroundColor3 = C.bgDark
-    btn.BackgroundTransparency = 0.45
-    btn.BorderSizePixel = 0
+    btn.Size = UDim2.new(1, 0, 0, 32)
+    btn.LayoutOrder = order
+    btn.BackgroundColor3 = C.bgCard
+    btn.BorderSizePixel = 1
+    btn.BorderColor3 = C.border
     btn.AutoButtonColor = false
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 14
+    btn.TextSize = 12
     btn.TextColor3 = C.text
     btn.Text = txt
     btn.Parent = parent
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
 
-    local sk = Instance.new("UIStroke", btn)
-    sk.Color = color or C.muted
-    sk.Thickness = 1.5
-    sk.Transparency = 0.5
+    -- left accent
+    local leftBar = Instance.new("Frame")
+    leftBar.Size = UDim2.new(0, 3, 1, 0)
+    leftBar.BackgroundColor3 = color
+    leftBar.BorderSizePixel = 0
+    leftBar.Parent = btn
 
     btn.MouseEnter:Connect(function()
-        tweenSmooth(sk, { Transparency = 0.15 }, 0.15)
-        tweenSmooth(btn, { BackgroundTransparency = 0.3 }, 0.15)
+        tween(btn, {BackgroundColor3 = C.bgInput}, 0.15)
     end)
     btn.MouseLeave:Connect(function()
-        tweenSmooth(sk, { Transparency = 0.5 }, 0.15)
-        tweenSmooth(btn, { BackgroundTransparency = 0.45 }, 0.15)
+        tween(btn, {BackgroundColor3 = C.bgCard}, 0.15)
     end)
 
-    -- Ripple
-    btn.MouseButton1Click:Connect(function()
-        local ripple = Instance.new("Frame")
-        ripple.Size = UDim2.new(0, 0, 0, 0)
-        ripple.Position = UDim2.new(0.5, 0, 0.5, 0)
-        ripple.AnchorPoint = Vector2.new(0.5, 0.5)
-        ripple.BackgroundColor3 = color or C.accent
-        ripple.BackgroundTransparency = 0.6
-        ripple.BorderSizePixel = 0
-        ripple.ZIndex = btn.ZIndex + 1
-        ripple.Parent = btn
-        Instance.new("UICorner", ripple).CornerRadius = UDim.new(1, 0)
-        tween(ripple, { Size = UDim2.new(2, 0, 2, 0), BackgroundTransparency = 1 }, 0.4)
-        task.delay(0.45, function() ripple:Destroy() end)
-    end)
-
-    return btn, sk
+    return btn, leftBar
 end
 
-local function updBtn(btn, sk, color, on, txt)
-    btn.Text = txt
-    tweenSmooth(sk, { Color = on and color or C.muted, Transparency = on and 0.15 or 0.5 }, 0.2)
+-- ── Keybind button builder ─────────────────────────────────
+local bindButtons = {} -- store references for updating display
+
+local function mkKeybindRow(parent, funcName, displayName, order)
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1, 0, 0, 32)
+    row.BackgroundColor3 = C.bgCard
+    row.BorderSizePixel = 1
+    row.BorderColor3 = C.border
+    row.LayoutOrder = order
+    row.Parent = parent
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0.55, 0, 1, 0)
+    lbl.Position = UDim2.new(0, 10, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Font = Enum.Font.GothamSemibold
+    lbl.TextSize = 11
+    lbl.TextColor3 = C.text
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Text = displayName
+    lbl.Parent = row
+
+    local bindBtn = Instance.new("TextButton")
+    bindBtn.Size = UDim2.new(0, 80, 0, 22)
+    bindBtn.Position = UDim2.new(1, -90, 0.5, -11)
+    bindBtn.BackgroundColor3 = C.bgInput
+    bindBtn.BorderSizePixel = 1
+    bindBtn.BorderColor3 = C.border
+    bindBtn.AutoButtonColor = false
+    bindBtn.Font = Enum.Font.GothamBold
+    bindBtn.TextSize = 11
+    bindBtn.TextColor3 = C.accent
+    bindBtn.Text = "[" .. keybinds[funcName].Name .. "]"
+    bindBtn.Parent = row
+
+    bindBtn.MouseEnter:Connect(function()
+        if waitingForBind ~= funcName then
+            tween(bindBtn, {BackgroundColor3 = Color3.fromRGB(50, 50, 68)}, 0.15)
+        end
+    end)
+    bindBtn.MouseLeave:Connect(function()
+        if waitingForBind ~= funcName then
+            tween(bindBtn, {BackgroundColor3 = C.bgInput}, 0.15)
+        end
+    end)
+
+    bindBtn.MouseButton1Click:Connect(function()
+        if waitingForBind then
+            -- cancel previous waiting
+            local prevBtn = bindButtons[waitingForBind]
+            if prevBtn then
+                prevBtn.Text = "[" .. keybinds[waitingForBind].Name .. "]"
+                prevBtn.TextColor3 = C.accent
+                tween(prevBtn, {BackgroundColor3 = C.bgInput}, 0.15)
+            end
+        end
+
+        waitingForBind = funcName
+        bindBtn.Text = "Press key..."
+        bindBtn.TextColor3 = C.warning
+        tween(bindBtn, {BackgroundColor3 = Color3.fromRGB(60, 45, 15)}, 0.2)
+    end)
+
+    bindButtons[funcName] = bindBtn
+    return row
 end
 
 -- ══════════════════════════════════════════════════════════
---  TAB 1: STATUS
+--  TAB: STATUS
 -- ══════════════════════════════════════════════════════════
-local statusContent = getInner("status")
+local statusInner = getInner("status")
 
-local stCard = mkCard(statusContent, 104, 1)
-mkLabel(stCard, "STATUS", 12, C.muted, 14, 10)
+-- Section header
+local stHeader = mkCard(statusInner, 22, 1)
+mkLabel(stHeader, "STATUS OVERVIEW", 10, C.accent, 8, 3, true)
 
-local stFrame = Instance.new("Frame")
-stFrame.Size = UDim2.new(1, -28, 0, 52)
-stFrame.Position = UDim2.new(0, 14, 0, 36)
-stFrame.BackgroundTransparency = 1
-stFrame.Parent = stCard
+-- Status pills
+local stCard = mkCard(statusInner, 76, 2)
+local stGrid = Instance.new("Frame")
+stGrid.Size = UDim2.new(1, -12, 0, 60)
+stGrid.Position = UDim2.new(0, 6, 0, 8)
+stGrid.BackgroundTransparency = 1
+stGrid.Parent = stCard
 
-local stGrid = Instance.new("UIGridLayout", stFrame)
-stGrid.CellSize = UDim2.new(0.5, -6, 0, 22)
-stGrid.CellPadding = UDim2.new(0, 6, 0, 6)
-stGrid.SortOrder = Enum.SortOrder.LayoutOrder
+local gLayout = Instance.new("UIGridLayout", stGrid)
+gLayout.CellSize = UDim2.new(0.5, -4, 0, 18)
+gLayout.CellPadding = UDim2.new(0, 4, 0, 4)
+gLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 local function mkPill(txt, color, order)
     local p = Instance.new("TextLabel")
     p.BackgroundColor3 = C.bgDark
-    p.BackgroundTransparency = 0.5
-    p.BorderSizePixel = 0
-    p.Font = Enum.Font.GothamMedium
-    p.TextSize = 11
+    p.BorderSizePixel = 1
+    p.BorderColor3 = C.border
+    p.Font = Enum.Font.GothamSemibold
+    p.TextSize = 10
     p.TextColor3 = color
     p.Text = txt
     p.LayoutOrder = order
-    Instance.new("UICorner", p).CornerRadius = UDim.new(1, 0)
-    p.Parent = stFrame
+    p.Parent = stGrid
     return p
 end
 
-local stESP    = mkPill("ESP ON", C.success, 1)
-local stAim    = mkPill("Aimbot OFF", C.muted, 2)
-local stFly    = mkPill("Fly OFF", C.muted, 3)
-local stNoclip = mkPill("Noclip OFF", C.muted, 4)
+local stESP     = mkPill("ESP ON", C.success, 1)
+local stAim     = mkPill("Aimbot OFF", C.muted, 2)
+local stFly     = mkPill("Fly OFF", C.muted, 3)
+local stNoclip  = mkPill("Noclip OFF", C.muted, 4)
+local stSilent  = mkPill("Silent OFF", C.muted, 5)
+local stTrigger = mkPill("Trigger OFF", C.muted, 6)
 
-local stRefresh = mkLabel(stCard, "Refresh: 0:30", 11, C.muted, 14, 84, 1, 16)
-stRefresh.Font = Enum.Font.Gotham
-
--- Lock indicator card
-local lockCard = mkCard(statusContent, 65, 2)
+-- Lock indicator
+local lockCard = mkCard(statusInner, 40, 3)
 lockCard.BackgroundColor3 = Color3.fromRGB(30, 15, 45)
-local lockGlow = lockCard:FindFirstChildWhichIsA("UIStroke")
-if lockGlow then lockGlow.Color = C.aimbot; lockGlow.Transparency = 0.85 end
+local lockLbl = mkLabel(lockCard, "No Target", 12, C.aimbot, 8, 4, true)
+local lockSub = mkLabel(lockCard, "Hold RMB to lock", 9, C.muted, 8, 22)
 
-local lockLbl = mkLabel(lockCard, "No Target", 15, C.aimbot, 14, 10)
-lockLbl.Font = Enum.Font.GothamBold
-local lockSub = mkLabel(lockCard, "Hold RMB to lock", 11, C.muted, 14, 34, 1, 16)
-lockSub.Font = Enum.Font.Gotham
+-- Refresh timer
+local stRefresh = mkLabel(mkCard(statusInner, 22, 4), "ESP Refresh: 0:30", 9, C.muted, 8, 3)
 
--- Extra status pills
-local stCard2 = mkCard(statusContent, 50, 3)
-local stSilent = mkLabel(stCard2, "Silent: OFF", 11, C.muted, 14, 6)
-stSilent.Font = Enum.Font.GothamMedium
-local stTrigger = mkLabel(stCard2, "Trigger: OFF", 11, C.muted, 14, 26)
-stTrigger.Font = Enum.Font.GothamMedium
-
--- Aimbot info card
-local fovCard = mkCard(statusContent, 55, 4)
-local fovInfoLbl = mkLabel(fovCard, "FOV: 200 | Smooth: 20", 11, C.accent, 14, 8)
-fovInfoLbl.Font = Enum.Font.GothamMedium
-local fovSubLbl = mkLabel(fovCard, "Part: Head | MaxDist: 500", 10, C.muted, 14, 28, 1, 16)
-fovSubLbl.Font = Enum.Font.Gotham
+-- Aimbot info
+local fovCard = mkCard(statusInner, 32, 5)
+local fovInfoLbl = mkLabel(fovCard, "FOV: 200 | Smooth: 20", 10, C.text, 8, 2)
+local fovSubLbl = mkLabel(fovCard, "Part: Head | Dist: 500", 9, C.muted, 8, 16)
 
 -- ══════════════════════════════════════════════════════════
---  TAB 2: CONFIG
+--  TAB: CONFIG
 -- ══════════════════════════════════════════════════════════
-local configContent = getInner("config")
+local configInner = getInner("config")
 
-mkSlider(configContent, "Hitbox", cfg.hitboxSize, cfg.hitboxMin, cfg.hitboxMax, 1, function(v) cfg.hitboxSize = v end)
-mkSlider(configContent, "Transparência", math.floor(cfg.hitboxTransparency * 100), 0, 100, 2, function(v) cfg.hitboxTransparency = v / 100 end, function(v) return "Transparência " .. v .. "%" end)
-mkSlider(configContent, "Fly Speed", cfg.flySpeed, cfg.flyMin, cfg.flyMax, 3, function(v) cfg.flySpeed = v end)
-mkSlider(configContent, "FOV", cfg.aimbotFOV, cfg.fovMin, cfg.fovMax, 4, function(v)
+mkLabel(mkCard(configInner, 22, 1), "SLIDERS", 10, C.accent, 8, 3, true)
+
+mkSlider(configInner, "Hitbox Size", cfg.hitboxSize, cfg.hitboxMin, cfg.hitboxMax, 2, function(v)
+    cfg.hitboxSize = v
+end)
+mkSlider(configInner, "Hitbox Transparency", cfg.hitboxTransparency * 100, 0, 100, 3, function(v)
+    cfg.hitboxTransparency = v / 100
+end)
+mkSlider(configInner, "Fly Speed", cfg.flySpeed, cfg.flyMin, cfg.flyMax, 4, function(v)
+    cfg.flySpeed = v
+end)
+mkSlider(configInner, "FOV Radius", cfg.aimbotFOV, cfg.fovMin, cfg.fovMax, 5, function(v)
     cfg.aimbotFOV = v
     if obj.fovCircle then obj.fovCircle.Radius = v end
 end)
-mkSlider(configContent, "Smooth", cfg.aimSmooth, cfg.smoothMin, cfg.smoothMax, 5, function(v)
+mkSlider(configInner, "Aim Smooth (0=snap)", cfg.aimSmooth, cfg.smoothMin, cfg.smoothMax, 6, function(v)
     cfg.aimSmooth = v
-end, function(v) return v == 0 and "Smooth: OFF (snap)" or "Smooth " .. v end)
-mkSlider(configContent, "Max Distance", cfg.maxDistance, cfg.distMin, cfg.distMax, 6, function(v) cfg.maxDistance = v end)
+end)
+mkSlider(configInner, "Max Distance", cfg.maxDistance, cfg.distMin, cfg.distMax, 7, function(v)
+    cfg.maxDistance = v
+end)
+mkSlider(configInner, "Trigger Delay (s)", cfg.triggerDelay * 100, 1, 100, 8, function(v)
+    cfg.triggerDelay = v / 100
+end)
+mkSlider(configInner, "Trigger FOV (px)", cfg.triggerFOV, 5, 100, 9, function(v)
+    cfg.triggerFOV = v
+end)
+mkSlider(configInner, "Health Min", cfg.healthMin, 1, 100, 10, function(v)
+    cfg.healthMin = v
+end)
 
 -- ══════════════════════════════════════════════════════════
---  TAB 3: AIMBOT (Normal + Silent + Trigger + Checks)
+--  TAB: AIMBOT
 -- ══════════════════════════════════════════════════════════
-local aimbotContent = getInner("aimbot")
+local aimbotInner = getInner("aimbot")
 
--- ── Hit Part selector ──────────────────────────────────────
-local partCard = mkCard(aimbotContent, 90, 1)
-mkLabel(partCard, "HIT PART", 12, C.muted, 14, 10)
-mkLabel(partCard, "Parte do corpo para mirar", 10, C.muted, 14, 28, 1, 14)
+mkLabel(mkCard(aimbotInner, 22, 1), "AIMBOT SETTINGS", 10, C.accent, 8, 3, true)
+
+-- Toggles
+mkToggle(aimbotInner, "Team Check", cfg.teamCheck, C.success, 2, function(v) cfg.teamCheck = v end)
+mkToggle(aimbotInner, "Visible Check", cfg.visibleCheck, C.fly, 3, function(v) cfg.visibleCheck = v end)
+mkToggle(aimbotInner, "Health Check", cfg.healthCheck, C.warning, 4, function(v) cfg.healthCheck = v end)
+
+-- Silent Aim toggle
+local silentToggle = mkToggle(aimbotInner, "Silent Aim", st.silentAim, C.silent, 5, function(v)
+    st.silentAim = v
+    notify(v and "Silent Aim ON" or "Silent Aim OFF", v and C.silent or C.error, "🔇")
+end)
+
+-- Trigger Bot toggle
+local triggerToggle = mkToggle(aimbotInner, "Trigger Bot", st.triggerBot, C.trigger, 6, function(v)
+    st.triggerBot = v
+    notify(v and "Trigger Bot ON" or "Trigger Bot OFF", v and C.trigger or C.error, "🔫")
+end)
+
+-- Hit Part selector
+mkLabel(mkCard(aimbotInner, 22, 7), "HIT PART", 10, C.accent, 8, 3, true)
 
 local partRow = Instance.new("Frame")
-partRow.Size = UDim2.new(1, -28, 0, 32)
-partRow.Position = UDim2.new(0, 14, 0, 48)
+partRow.Size = UDim2.new(1, 0, 0, 30)
 partRow.BackgroundTransparency = 1
-partRow.Parent = partCard
+partRow.LayoutOrder = 8
+partRow.Parent = aimbotInner
 
 local partGrid = Instance.new("UIGridLayout", partRow)
-partGrid.CellSize = UDim2.new(0, 88, 0, 30)
-partGrid.CellPadding = UDim2.new(0, 6, 0, 0)
+partGrid.CellSize = UDim2.new(0.333, -4, 1, 0)
+partGrid.CellPadding = UDim2.new(0, 3, 0, 0)
 partGrid.SortOrder = Enum.SortOrder.LayoutOrder
 
 local partBtns = {}
 local function setAimPart(part)
     cfg.aimbotPart = part
     for nm, btn in pairs(partBtns) do
-        local active = nm == part
-        tweenSmooth(btn, {
-            BackgroundTransparency = active and 0.25 or 0.82,
-            TextColor3 = active and C.aimbot or C.muted
-        }, 0.2)
-        local sk = btn:FindFirstChildWhichIsA("UIStroke")
-        if sk then tweenSmooth(sk, { Color = active and C.aimbot or C.muted, Transparency = active and 0.05 or 0.65 }, 0.2) end
+        local active = (nm == part)
+        tween(btn, {
+            BackgroundColor3 = active and C.aimbot or C.bgCard,
+            TextColor3 = active and C.white or C.muted,
+        }, 0.15)
     end
     notify("Target: " .. part, C.aimbot, "🎯")
 end
 
 for i, nm in ipairs({"Head", "Torso", "Closest"}) do
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 88, 0, 30)
     btn.LayoutOrder = i
-    btn.BackgroundColor3 = C.aimbot
-    btn.BackgroundTransparency = nm == cfg.aimbotPart and 0.25 or 0.82
-    btn.BorderSizePixel = 0
+    btn.BackgroundColor3 = nm == cfg.aimbotPart and C.aimbot or C.bgCard
+    btn.BorderSizePixel = 1
+    btn.BorderColor3 = C.border
     btn.AutoButtonColor = false
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 12
-    btn.TextColor3 = nm == cfg.aimbotPart and C.aimbot or C.muted
+    btn.TextSize = 11
+    btn.TextColor3 = nm == cfg.aimbotPart and C.white or C.muted
     btn.Text = nm
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
-    local sk = Instance.new("UIStroke", btn)
-    sk.Color = nm == cfg.aimbotPart and C.aimbot or C.muted
-    sk.Transparency = nm == cfg.aimbotPart and 0.05 or 0.65
-    sk.Thickness = 1.5
     btn.Parent = partRow
     partBtns[nm] = btn
     btn.MouseButton1Click:Connect(function() setAimPart(nm) end)
 end
 
--- ── Checks ─────────────────────────────────────────────────
-mkToggle(aimbotContent, "Team Check", cfg.teamCheck, 2, function(v) cfg.teamCheck = v end)
-mkToggle(aimbotContent, "Visible Check", cfg.visibleCheck, 3, function(v) cfg.visibleCheck = v end)
-mkToggle(aimbotContent, "Health Check", cfg.healthCheck, 4, function(v) cfg.healthCheck = v end)
-mkSlider(aimbotContent, "Health Min", cfg.healthMin, 1, 100, 5, function(v) cfg.healthMin = v end)
-
--- ── Silent Aim ─────────────────────────────────────────────
-local silentCard = mkCard(aimbotContent, 70, 6)
-mkLabel(silentCard, "SILENT AIM", 12, C.silent, 14, 8)
-mkLabel(silentCard, "Redireciona tiros sem mover a câmara", 10, C.muted, 14, 26, 1, 14)
-
-local _, silentGet, silentSet
-_, silentGet, silentSet = mkToggle(aimbotContent, "Silent Aim Ativo", st.silentAim, 7, function(v)
-    st.silentAim = v
-    notify(v and "Silent Aim ON" or "Silent Aim OFF", v and C.silent or C.error, "🔇")
-end)
-
--- ── Trigger Bot ────────────────────────────────────────────
-local trigCard = mkCard(aimbotContent, 70, 8)
-mkLabel(trigCard, "TRIGGER BOT", 12, C.trigger, 14, 8)
-mkLabel(trigCard, "Dispara automaticamente ao mirar inimigo", 10, C.muted, 14, 26, 1, 14)
-
-local _, trigGet, trigSet
-_, trigGet, trigSet = mkToggle(aimbotContent, "Trigger Bot Ativo", st.triggerBot, 9, function(v)
-    st.triggerBot = v
-    notify(v and "Trigger Bot ON" or "Trigger Bot OFF", v and C.trigger or C.error, "🔫")
-end)
-
-mkSlider(aimbotContent, "Trigger Delay", cfg.triggerDelay * 100, 1, 100, 10, function(v)
-    cfg.triggerDelay = v / 100
-end, function(v) return "Trigger Delay " .. string.format("%.2f", v / 100) .. "s" end)
-
-mkSlider(aimbotContent, "Trigger FOV", cfg.triggerFOV, 5, 100, 11, function(v) cfg.triggerFOV = v end)
-
 -- ══════════════════════════════════════════════════════════
---  TAB 4: PLAYERS (Spectate, Fling, TP)
+--  TAB: PLAYERS
 -- ══════════════════════════════════════════════════════════
-local playersContent = getInner("players")
+local playersInner = getInner("players")
 
-local plrHeaderCard = mkCard(playersContent, 45, 0)
-mkLabel(plrHeaderCard, "PLAYERS", 13, C.player, 14, 6)
-local plrCountLbl = mkLabel(plrHeaderCard, "0 players", 10, C.muted, 14, 24, 1, 14)
-plrCountLbl.Font = Enum.Font.Gotham
+mkLabel(mkCard(playersInner, 22, 1), "PLAYERS LIST", 10, C.accent, 8, 3, true)
 
--- Spectate status
-local specCard = mkCard(playersContent, 50, 1)
-specCard.BackgroundColor3 = Color3.fromRGB(15, 25, 40)
-local specLbl = mkLabel(specCard, "Spectate: OFF", 12, C.player, 14, 6)
-specLbl.Font = Enum.Font.GothamBold
-local specSubLbl = mkLabel(specCard, "Clica Spectate num jogador", 10, C.muted, 14, 26, 1, 14)
-specSubLbl.Font = Enum.Font.Gotham
+local playerListFrame = Instance.new("Frame")
+playerListFrame.Size = UDim2.new(1, 0, 0, 0)
+playerListFrame.AutomaticSize = Enum.AutomaticSize.Y
+playerListFrame.BackgroundTransparency = 1
+playerListFrame.LayoutOrder = 2
+playerListFrame.Parent = playersInner
 
--- Player list container
-local plrListFrame = Instance.new("Frame")
-plrListFrame.Size = UDim2.new(1, 0, 0, 0)
-plrListFrame.AutomaticSize = Enum.AutomaticSize.Y
-plrListFrame.BackgroundTransparency = 1
-plrListFrame.LayoutOrder = 2
-plrListFrame.Parent = playersContent
+local plList = Instance.new("UIListLayout", playerListFrame)
+plList.Padding = UDim.new(0, 4)
+plList.SortOrder = Enum.SortOrder.LayoutOrder
 
-local plrListLayout = Instance.new("UIListLayout", plrListFrame)
-plrListLayout.Padding = UDim.new(0, 6)
-plrListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
--- ── Spectate Functions ─────────────────────────────────────
-local function startSpectate(targetPlr)
-    if not targetPlr or not targetPlr.Character then
-        notify("Jogador sem character!", C.error, "❌")
-        return
-    end
-    local hum = targetPlr.Character:FindFirstChild("Humanoid")
-    if not hum or hum.Health <= 0 then
-        notify("Jogador morto!", C.error, "❌")
-        return
-    end
-
-    st.spectating = true
-    st.spectateTarget = targetPlr
-    camera.CameraSubject = hum
-
-    specLbl.Text = "Spectating: " .. targetPlr.Name
-    specLbl.TextColor3 = C.success
-    specSubLbl.Text = "Clica Unspectate para voltar"
-    tweenSmooth(specCard, { BackgroundColor3 = Color3.fromRGB(15, 40, 25) }, 0.3)
-
-    notify("Spectating " .. targetPlr.Name, C.success, "📷")
-end
+local spectatingLabel = nil
 
 local function stopSpectate()
-    st.spectating = false
-    st.spectateTarget = nil
-    local char = player.Character
-    if char then
-        local hum = char:FindFirstChild("Humanoid")
-        if hum then camera.CameraSubject = hum end
+    if st.spectating then
+        st.spectating = false
+        st.spectateTarget = nil
+        pcall(function()
+            local char = player.Character
+            if char then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum then camera.CameraSubject = hum end
+            end
+        end)
+        if spectatingLabel then
+            spectatingLabel.Text = "Not spectating"
+            spectatingLabel.TextColor3 = C.muted
+        end
+        notify("Spectate OFF", C.error, "📷")
     end
-
-    specLbl.Text = "Spectate: OFF"
-    specLbl.TextColor3 = C.player
-    specSubLbl.Text = "Clica Spectate num jogador"
-    tweenSmooth(specCard, { BackgroundColor3 = Color3.fromRGB(15, 25, 40) }, 0.3)
-
-    notify("Spectate desligado", C.player, "📷")
 end
 
--- ── Fling Function ─────────────────────────────────────────
-local function flingPlayer(targetPlr)
-    if not targetPlr or not targetPlr.Character then
-        notify("Jogador sem character!", C.error, "❌")
-        return
+local function startSpectate(plr)
+    if plr == player then return end
+    local char = plr.Character
+    if not char then notify("No character", C.error, "❌"); return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum then notify("No humanoid", C.error, "❌"); return end
+    st.spectating = true
+    st.spectateTarget = plr
+    camera.CameraSubject = hum
+    if spectatingLabel then
+        spectatingLabel.Text = "Watching: " .. plr.Name
+        spectatingLabel.TextColor3 = C.success
     end
+    notify("Spectating " .. plr.Name, C.success, "📷")
+end
 
-    local myChar = player.Character
-    if not myChar then return end
-    local myHRP = myChar:FindFirstChild("HumanoidRootPart")
-    if not myHRP then return end
+local function flingPlayer(plr)
+    if plr == player then return end
+    local char = player.Character
+    local tgtChar = plr.Character
+    if not char or not tgtChar then notify("No character", C.error, "❌"); return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local tgtHrp = tgtChar:FindFirstChild("HumanoidRootPart")
+    if not hrp or not tgtHrp then return end
 
-    local targetHRP = targetPlr.Character:FindFirstChild("HumanoidRootPart")
-    if not targetHRP then
-        notify("Target sem HumanoidRootPart!", C.error, "❌")
-        return
-    end
-
-    notify("Flinging " .. targetPlr.Name .. "...", C.warning, "💥")
-
-    -- Guardar posição original
-    local origPos = myHRP.CFrame
-    local origVelocity = myHRP.Velocity
-
-    -- Teleportar para o target
-    myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 0, -3)
-
+    -- TP to target
+    hrp.CFrame = tgtHrp.CFrame * CFrame.new(0, 0, -3)
     task.wait(0.1)
 
-    -- Aplicar velocidade e rotação angular
+    -- Apply fling velocity
     pcall(function()
-        myHRP.Velocity = Vector3.new(math.random(-500, 500), math.random(200, 500), math.random(-500, 500))
-        myHRP.RotVelocity = Vector3.new(math.random(-200, 200), math.random(-200, 200), math.random(-200, 200))
+        hrp.Velocity = Vector3.new(
+            math.random(-500, 500),
+            math.random(200, 600),
+            math.random(-500, 500)
+        )
+        hrp.RotVelocity = Vector3.new(
+            math.random(-100, 100),
+            math.random(-100, 100),
+            math.random(-100, 100)
+        )
     end)
-
-    task.delay(0.5, function()
-        pcall(function()
-            myHRP.CFrame = origPos
-            myHRP.Velocity = Vector3.zero
-            myHRP.RotVelocity = Vector3.zero
-        end)
-        notify("Fling completo!", C.success, "✅")
-    end)
+    notify("Flung " .. plr.Name, C.warning, "💥")
 end
 
--- ── TP Function ────────────────────────────────────────────
-local function tpToPlayer(targetPlr)
-    if not targetPlr or not targetPlr.Character then
-        notify("Jogador sem character!", C.error, "❌")
-        return
-    end
-
-    local myChar = player.Character
-    if not myChar then return end
-    local myHRP = myChar:FindFirstChild("HumanoidRootPart")
-    if not myHRP then return end
-
-    local targetHRP = targetPlr.Character:FindFirstChild("HumanoidRootPart")
-    if not targetHRP then
-        notify("Target sem HumanoidRootPart!", C.error, "❌")
-        return
-    end
-
-    -- Teleportar 3 studs atrás do target
-    myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 0, -3)
-    notify("TP para " .. targetPlr.Name, C.success, "🏃")
+local function tpToPlayer(plr)
+    if plr == player then return end
+    local char = player.Character
+    local tgtChar = plr.Character
+    if not char or not tgtChar then notify("No character", C.error, "❌"); return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local tgtHrp = tgtChar:FindFirstChild("HumanoidRootPart")
+    if not hrp or not tgtHrp then return end
+    hrp.CFrame = tgtHrp.CFrame * CFrame.new(0, 0, -3)
+    notify("TP to " .. plr.Name, C.fly, "🏃")
 end
 
--- ── Build Player List ──────────────────────────────────────
 local function refreshPlayerList()
-    -- Limpar lista existente
-    for _, child in ipairs(plrListFrame:GetChildren()) do
-        if child:IsA("Frame") then child:Destroy() end
+    for _, ch in ipairs(playerListFrame:GetChildren()) do
+        if ch:IsA("Frame") then ch:Destroy() end
+    end
+
+    -- spectating bar
+    local specBar = Instance.new("Frame")
+    specBar.Size = UDim2.new(1, 0, 0, 22)
+    specBar.BackgroundColor3 = C.bgCard
+    specBar.BorderSizePixel = 1
+    specBar.BorderColor3 = C.border
+    specBar.LayoutOrder = 0
+    specBar.Parent = playerListFrame
+
+    spectatingLabel = Instance.new("TextLabel")
+    spectatingLabel.Size = UDim2.new(0.65, 0, 1, 0)
+    spectatingLabel.Position = UDim2.new(0, 8, 0, 0)
+    spectatingLabel.BackgroundTransparency = 1
+    spectatingLabel.Font = Enum.Font.GothamSemibold
+    spectatingLabel.TextSize = 9
+    spectatingLabel.TextColor3 = st.spectating and C.success or C.muted
+    spectatingLabel.TextXAlignment = Enum.TextXAlignment.Left
+    spectatingLabel.Text = st.spectating and ("Watching: " .. (st.spectateTarget and st.spectateTarget.Name or "?")) or "Not spectating"
+    spectatingLabel.Parent = specBar
+
+    if st.spectating then
+        local unspecBtn = Instance.new("TextButton")
+        unspecBtn.Size = UDim2.new(0, 60, 0, 16)
+        unspecBtn.Position = UDim2.new(1, -68, 0.5, -8)
+        unspecBtn.BackgroundColor3 = C.error
+        unspecBtn.BorderSizePixel = 0
+        unspecBtn.AutoButtonColor = false
+        unspecBtn.Font = Enum.Font.GothamBold
+        unspecBtn.TextSize = 9
+        unspecBtn.TextColor3 = C.white
+        unspecBtn.Text = "UNSPEC"
+        unspecBtn.Parent = specBar
+        unspecBtn.MouseButton1Click:Connect(function() stopSpectate(); refreshPlayerList() end)
     end
 
     local plrs = Players:GetPlayers()
-    local count = 0
+    for idx, plr in ipairs(plrs) do
+        if plr == player then continue end
 
-    for _, plr in ipairs(plrs) do
-        if plr ~= player then
-            count = count + 1
-            local card = Instance.new("Frame")
-            card.Size = UDim2.new(1, 0, 0, 90)
-            card.BackgroundColor3 = C.bgCard
-            card.BackgroundTransparency = 0.2
-            card.BorderSizePixel = 0
-            card.LayoutOrder = count
-            card.Parent = plrListFrame
-            Instance.new("UICorner", card).CornerRadius = UDim.new(0, 10)
+        local row = Instance.new("Frame")
+        row.Size = UDim2.new(1, 0, 0, 48)
+        row.BackgroundColor3 = C.bgCard
+        row.BorderSizePixel = 1
+        row.BorderColor3 = C.border
+        row.LayoutOrder = idx
+        row.Parent = playerListFrame
 
-            local csk = Instance.new("UIStroke", card)
-            csk.Color = C.white
-            csk.Transparency = 0.92
+        -- Name
+        local nameLbl = Instance.new("TextLabel")
+        nameLbl.Size = UDim2.new(1, -10, 0, 14)
+        nameLbl.Position = UDim2.new(0, 8, 0, 4)
+        nameLbl.BackgroundTransparency = 1
+        nameLbl.Font = Enum.Font.GothamBold
+        nameLbl.TextSize = 10
+        nameLbl.TextColor3 = C.text
+        nameLbl.TextXAlignment = Enum.TextXAlignment.Left
+        nameLbl.Text = plr.DisplayName .. " (@" .. plr.Name .. ")"
+        nameLbl.TextTruncate = Enum.TextTruncate.AtEnd
+        nameLbl.Parent = row
 
-            -- Nome do jogador
-            local nameLbl = Instance.new("TextLabel")
-            nameLbl.Size = UDim2.new(1, -20, 0, 18)
-            nameLbl.Position = UDim2.new(0, 10, 0, 6)
-            nameLbl.BackgroundTransparency = 1
-            nameLbl.Font = Enum.Font.GothamBold
-            nameLbl.TextSize = 13
-            nameLbl.TextColor3 = C.text
-            nameLbl.TextXAlignment = Enum.TextXAlignment.Left
-            nameLbl.Text = plr.DisplayName
-            nameLbl.TextTruncate = Enum.TextTruncate.AtEnd
-            nameLbl.Parent = card
+        -- HP bar
+        local hp = 100
+        pcall(function()
+            local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+            if hum then hp = math.floor((hum.Health / hum.MaxHealth) * 100) end
+        end)
 
-            -- Username
-            local userLbl = Instance.new("TextLabel")
-            userLbl.Size = UDim2.new(0.5, -10, 0, 14)
-            userLbl.Position = UDim2.new(0, 10, 0, 24)
-            userLbl.BackgroundTransparency = 1
-            userLbl.Font = Enum.Font.Gotham
-            userLbl.TextSize = 10
-            userLbl.TextColor3 = C.muted
-            userLbl.TextXAlignment = Enum.TextXAlignment.Left
-            userLbl.Text = "@" .. plr.Name
-            userLbl.TextTruncate = Enum.TextTruncate.AtEnd
-            userLbl.Parent = card
+        local hpBg = Instance.new("Frame")
+        hpBg.Size = UDim2.new(1, -16, 0, 4)
+        hpBg.Position = UDim2.new(0, 8, 0, 20)
+        hpBg.BackgroundColor3 = C.bgDark
+        hpBg.BorderSizePixel = 0
+        hpBg.Parent = row
 
-            -- HP Bar background
-            local hpBg = Instance.new("Frame")
-            hpBg.Size = UDim2.new(1, -20, 0, 8)
-            hpBg.Position = UDim2.new(0, 10, 0, 42)
-            hpBg.BackgroundColor3 = C.bgDark
-            hpBg.BorderSizePixel = 0
-            hpBg.Parent = card
-            Instance.new("UICorner", hpBg).CornerRadius = UDim.new(1, 0)
+        local hpFill = Instance.new("Frame")
+        hpFill.Size = UDim2.new(hp / 100, 0, 1, 0)
+        hpFill.BackgroundColor3 = hp > 60 and C.success or hp > 25 and C.warning or C.error
+        hpFill.BorderSizePixel = 0
+        hpFill.Parent = hpBg
 
-            -- HP Bar fill
-            local hpFill = Instance.new("Frame")
-            hpFill.Size = UDim2.new(0, 0, 1, 0)
-            hpFill.BackgroundColor3 = C.success
-            hpFill.BorderSizePixel = 0
-            hpFill.Parent = hpBg
-            Instance.new("UICorner", hpFill).CornerRadius = UDim.new(1, 0)
+        -- Buttons row
+        local btnRow = Instance.new("Frame")
+        btnRow.Size = UDim2.new(1, -8, 0, 18)
+        btnRow.Position = UDim2.new(0, 4, 0, 27)
+        btnRow.BackgroundTransparency = 1
+        btnRow.Parent = row
 
-            -- HP Text
-            local hpLbl = Instance.new("TextLabel")
-            hpLbl.Size = UDim2.new(1, -20, 0, 12)
-            hpLbl.Position = UDim2.new(0, 10, 0, 42)
-            hpLbl.BackgroundTransparency = 1
-            hpLbl.Font = Enum.Font.GothamBold
-            hpLbl.TextSize = 8
-            hpLbl.TextColor3 = C.white
-            hpLbl.Text = "..."
-            hpLbl.ZIndex = 3
-            hpLbl.Parent = card
+        local bGrid = Instance.new("UIGridLayout", btnRow)
+        bGrid.CellSize = UDim2.new(0.333, -3, 1, 0)
+        bGrid.CellPadding = UDim2.new(0, 3, 0, 0)
+        bGrid.SortOrder = Enum.SortOrder.LayoutOrder
 
-            -- Update HP
-            local function updateHP()
-                pcall(function()
-                    if plr.Character then
-                        local hum = plr.Character:FindFirstChild("Humanoid")
-                        if hum then
-                            local pct = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
-                            hpFill.Size = UDim2.new(pct, 0, 1, 0)
-                            hpFill.BackgroundColor3 = pct > 0.5 and C.success or pct > 0.25 and C.warning or C.error
-                            hpLbl.Text = math.floor(hum.Health) .. "/" .. math.floor(hum.MaxHealth)
-                        else
-                            hpFill.Size = UDim2.new(0, 0, 1, 0)
-                            hpLbl.Text = "Dead"
-                        end
-                    else
-                        hpFill.Size = UDim2.new(0, 0, 1, 0)
-                        hpLbl.Text = "No char"
-                    end
-                end)
-            end
-            updateHP()
-
-            -- Buttons row
-            local btnRow = Instance.new("Frame")
-            btnRow.Size = UDim2.new(1, -20, 0, 28)
-            btnRow.Position = UDim2.new(0, 10, 0, 56)
-            btnRow.BackgroundTransparency = 1
-            btnRow.Parent = card
-
-            local btnGrid = Instance.new("UIGridLayout", btnRow)
-            btnGrid.CellSize = UDim2.new(0, 88, 0, 26)
-            btnGrid.CellPadding = UDim2.new(0, 6, 0, 0)
-            btnGrid.SortOrder = Enum.SortOrder.LayoutOrder
-
-            -- Spectate button
-            local specBtn = Instance.new("TextButton")
-            specBtn.Size = UDim2.new(0, 88, 0, 26)
-            specBtn.LayoutOrder = 1
-            specBtn.BackgroundColor3 = C.player
-            specBtn.BackgroundTransparency = 0.7
-            specBtn.BorderSizePixel = 0
-            specBtn.AutoButtonColor = false
-            specBtn.Font = Enum.Font.GothamBold
-            specBtn.TextSize = 10
-            specBtn.TextColor3 = C.player
-            specBtn.Text = "📷 Spectate"
-            specBtn.Parent = btnRow
-            Instance.new("UICorner", specBtn).CornerRadius = UDim.new(0, 6)
-            local specBtnSk = Instance.new("UIStroke", specBtn)
-            specBtnSk.Color = C.player
-            specBtnSk.Transparency = 0.5
-
-            specBtn.MouseButton1Click:Connect(function()
-                if st.spectating and st.spectateTarget == plr then
-                    stopSpectate()
-                    specBtn.Text = "📷 Spectate"
-                    specBtn.TextColor3 = C.player
-                else
-                    if st.spectating then stopSpectate() end
-                    startSpectate(plr)
-                    specBtn.Text = "❌ Unspec"
-                    specBtn.TextColor3 = C.error
-                end
-            end)
-
-            -- Fling button
-            local flingBtn = Instance.new("TextButton")
-            flingBtn.Size = UDim2.new(0, 88, 0, 26)
-            flingBtn.LayoutOrder = 2
-            flingBtn.BackgroundColor3 = C.warning
-            flingBtn.BackgroundTransparency = 0.7
-            flingBtn.BorderSizePixel = 0
-            flingBtn.AutoButtonColor = false
-            flingBtn.Font = Enum.Font.GothamBold
-            flingBtn.TextSize = 10
-            flingBtn.TextColor3 = C.warning
-            flingBtn.Text = "💥 Fling"
-            flingBtn.Parent = btnRow
-            Instance.new("UICorner", flingBtn).CornerRadius = UDim.new(0, 6)
-            Instance.new("UIStroke", flingBtn).Color = C.warning
-
-            flingBtn.MouseButton1Click:Connect(function() flingPlayer(plr) end)
-
-            -- TP button
-            local tpBtn = Instance.new("TextButton")
-            tpBtn.Size = UDim2.new(0, 88, 0, 26)
-            tpBtn.LayoutOrder = 3
-            tpBtn.BackgroundColor3 = C.success
-            tpBtn.BackgroundTransparency = 0.7
-            tpBtn.BorderSizePixel = 0
-            tpBtn.AutoButtonColor = false
-            tpBtn.Font = Enum.Font.GothamBold
-            tpBtn.TextSize = 10
-            tpBtn.TextColor3 = C.success
-            tpBtn.Text = "🏃 TP"
-            tpBtn.Parent = btnRow
-            Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0, 6)
-            Instance.new("UIStroke", tpBtn).Color = C.success
-
-            tpBtn.MouseButton1Click:Connect(function() tpToPlayer(plr) end)
-
-            -- Hover effects
-            for _, b in ipairs({specBtn, flingBtn, tpBtn}) do
-                b.MouseEnter:Connect(function()
-                    tweenSmooth(b, { BackgroundTransparency = 0.4 }, 0.15)
-                end)
-                b.MouseLeave:Connect(function()
-                    tweenSmooth(b, { BackgroundTransparency = 0.7 }, 0.15)
-                end)
-            end
-
-            -- HP update loop for this card
-            task.spawn(function()
-                while st.running and card.Parent do
-                    updateHP()
-                    task.wait(1)
-                end
-            end)
+        local function mkSmallBtn(text, col, ord, cb)
+            local b = Instance.new("TextButton")
+            b.LayoutOrder = ord
+            b.BackgroundColor3 = col
+            b.BackgroundTransparency = 0.7
+            b.BorderSizePixel = 1
+            b.BorderColor3 = col
+            b.AutoButtonColor = false
+            b.Font = Enum.Font.GothamBold
+            b.TextSize = 9
+            b.TextColor3 = col
+            b.Text = text
+            b.Parent = btnRow
+            b.MouseEnter:Connect(function() tween(b, {BackgroundTransparency = 0.3}, 0.15) end)
+            b.MouseLeave:Connect(function() tween(b, {BackgroundTransparency = 0.7}, 0.15) end)
+            b.MouseButton1Click:Connect(cb)
+            return b
         end
-    end
 
-    plrCountLbl.Text = count .. " player" .. (count ~= 1 and "s" or "")
+        local p = plr
+        mkSmallBtn("SPEC", C.fly, 1, function() startSpectate(p); refreshPlayerList() end)
+        mkSmallBtn("FLING", C.warning, 2, function() flingPlayer(p) end)
+        mkSmallBtn("TP", C.success, 3, function() tpToPlayer(p) end)
+    end
 end
 
 -- Auto-refresh player list
 task.spawn(function()
     while st.running do
+        task.wait(3)
         if activeTab == "players" then
-            refreshPlayerList()
+            pcall(refreshPlayerList)
         end
-        task.wait(2)
     end
 end)
 
--- Watch for spectate target leaving
+-- Check spectate target leaving
 Players.PlayerRemoving:Connect(function(plr)
     if st.spectating and st.spectateTarget == plr then
         stopSpectate()
-        notify(plr.Name .. " saiu do jogo!", C.error, "⚠️")
     end
 end)
 
 -- ══════════════════════════════════════════════════════════
---  TAB 5: ACTIONS
+--  TAB: ACTIONS
 -- ══════════════════════════════════════════════════════════
-local actionsContent = getInner("actions")
+local actionsInner = getInner("actions")
 
-local espBtn, espSk = mkActionBtn(actionsContent, "👁️  ESP  ✓", C.success, 1)
-local aimBtn, aimSk = mkActionBtn(actionsContent, "🎯  AIMBOT", C.muted, 2)
-local flyBtn, flySk = mkActionBtn(actionsContent, "✈️  FLY", C.muted, 3)
-local hitBtn, hitSk = mkActionBtn(actionsContent, "📦  HITBOX", C.muted, 4)
-local noclipBtn, noclipSk = mkActionBtn(actionsContent, "🚶  NOCLIP", C.muted, 5)
+mkLabel(mkCard(actionsInner, 22, 1), "TOGGLE FUNCTIONS", 10, C.accent, 8, 3, true)
 
--- Eject button
-local ejectBtn, ejectSk = mkActionBtn(actionsContent, "⚠️  EJECT  (P)", C.error, 6)
-ejectBtn.BackgroundColor3 = Color3.fromRGB(40, 12, 12)
-ejectBtn.BackgroundTransparency = 0.35
+local espBtn, espBar = mkActionBtn(actionsInner, "  ESP", C.success, 2)
+local aimBtn, aimBar = mkActionBtn(actionsInner, "  AIMBOT", C.aimbot, 3)
+local flyBtn, flyBar = mkActionBtn(actionsInner, "  FLY", C.fly, 4)
+local hitBtn, hitBar = mkActionBtn(actionsInner, "  HITBOX", C.warning, 5)
+local noclipBtn, noclipBar = mkActionBtn(actionsInner, "  NOCLIP", C.success, 6)
 
--- Footer
-local foot = Instance.new("Frame")
-foot.Size = UDim2.new(1, 0, 0, 50)
-foot.BackgroundTransparency = 1
-foot.LayoutOrder = 7
-foot.Parent = actionsContent
+mkLabel(mkCard(actionsInner, 22, 7), "SYSTEM", 10, C.accent, 8, 3, true)
 
-local footLbl = Instance.new("TextLabel")
-footLbl.Size = UDim2.new(1, -8, 1, 0)
-footLbl.Position = UDim2.new(0, 4, 0, 0)
-footLbl.BackgroundTransparency = 1
-footLbl.Font = Enum.Font.Gotham
-footLbl.TextSize = 9
-footLbl.TextColor3 = C.muted
-footLbl.Text = "T=ESP | G=Aimbot | F=Fly | H=Hitbox | U=Noclip\nY=GUI | P=Eject | RMB=Lock Target"
-footLbl.TextWrapped = true
-footLbl.TextYAlignment = Enum.TextYAlignment.Top
-footLbl.Parent = foot
+local ejectBtn, ejectBar = mkActionBtn(actionsInner, "  EJECT", C.error, 8)
+ejectBtn.BackgroundColor3 = Color3.fromRGB(35, 12, 12)
 
 -- ══════════════════════════════════════════════════════════
---  TAB 6: STYLE
+--  TAB: BINDS (Keybind selector)
 -- ══════════════════════════════════════════════════════════
-local styleContent = getInner("style")
+local bindsInner = getInner("binds")
 
--- Theme selector
-local themeCard = mkCard(styleContent, 90, 1)
-mkLabel(themeCard, "TEMA DE COR", 12, C.muted, 14, 10)
+mkLabel(mkCard(bindsInner, 22, 1), "KEYBIND SETTINGS", 10, C.accent, 8, 3, true)
+mkLabel(mkCard(bindsInner, 22, 2), "Click a key box, then press a new key", 9, C.muted, 8, 3)
+
+mkKeybindRow(bindsInner, "esp",     "ESP Toggle", 3)
+mkKeybindRow(bindsInner, "aimbot",  "Aimbot Toggle", 4)
+mkKeybindRow(bindsInner, "fly",     "Fly Toggle", 5)
+mkKeybindRow(bindsInner, "hitbox",  "Hitbox Toggle", 6)
+mkKeybindRow(bindsInner, "noclip",  "Noclip Toggle", 7)
+mkKeybindRow(bindsInner, "silent",  "Silent Aim Toggle", 8)
+mkKeybindRow(bindsInner, "trigger", "Trigger Bot Toggle", 9)
+mkKeybindRow(bindsInner, "gui",     "Toggle GUI", 10)
+mkKeybindRow(bindsInner, "eject",   "Eject Script", 11)
+
+-- Reset all binds button
+local resetBindBtn = Instance.new("TextButton")
+resetBindBtn.Size = UDim2.new(1, 0, 0, 28)
+resetBindBtn.LayoutOrder = 12
+resetBindBtn.BackgroundColor3 = Color3.fromRGB(35, 12, 12)
+resetBindBtn.BorderSizePixel = 1
+resetBindBtn.BorderColor3 = C.error
+resetBindBtn.AutoButtonColor = false
+resetBindBtn.Font = Enum.Font.GothamBold
+resetBindBtn.TextSize = 11
+resetBindBtn.TextColor3 = C.error
+resetBindBtn.Text = "RESET ALL TO DEFAULT"
+resetBindBtn.Parent = bindsInner
+
+resetBindBtn.MouseButton1Click:Connect(function()
+    keybinds.esp     = Enum.KeyCode.T
+    keybinds.aimbot  = Enum.KeyCode.G
+    keybinds.fly     = Enum.KeyCode.F
+    keybinds.hitbox  = Enum.KeyCode.H
+    keybinds.noclip  = Enum.KeyCode.U
+    keybinds.gui     = Enum.KeyCode.Y
+    keybinds.eject   = Enum.KeyCode.P
+    keybinds.silent  = Enum.KeyCode.J
+    keybinds.trigger = Enum.KeyCode.K
+    for fn, btn in pairs(bindButtons) do
+        btn.Text = "[" .. keybinds[fn].Name .. "]"
+        btn.TextColor3 = C.accent
+        tween(btn, {BackgroundColor3 = C.bgInput}, 0.15)
+    end
+    waitingForBind = nil
+    notify("Binds reset to default", C.warning, "🔄")
+end)
+
+-- ══════════════════════════════════════════════════════════
+--  TAB: STYLE
+-- ══════════════════════════════════════════════════════════
+local styleInner = getInner("style")
+
+mkLabel(mkCard(styleInner, 22, 1), "COLOR THEME", 10, C.accent, 8, 3, true)
 
 local themeRow = Instance.new("Frame")
-themeRow.Size = UDim2.new(1, -28, 0, 30)
-themeRow.Position = UDim2.new(0, 14, 0, 40)
+themeRow.Size = UDim2.new(1, 0, 0, 32)
 themeRow.BackgroundTransparency = 1
-themeRow.Parent = themeCard
+themeRow.LayoutOrder = 2
+themeRow.Parent = styleInner
 
-local themeGrid = Instance.new("UIGridLayout", themeRow)
-themeGrid.CellSize = UDim2.new(0, 34, 0, 26)
-themeGrid.CellPadding = UDim2.new(0, 5, 0, 0)
-themeGrid.SortOrder = Enum.SortOrder.LayoutOrder
+local thGrid = Instance.new("UIGridLayout", themeRow)
+thGrid.CellSize = UDim2.new(0, 34, 0, 28)
+thGrid.CellPadding = UDim2.new(0, 4, 0, 0)
+thGrid.SortOrder = Enum.SortOrder.LayoutOrder
 
-local themeBtns = {}
+local themeBtnList = {}
 
 local function applyTheme(color)
     C.accent = color
-    pcall(function()
-        pStroke.Color = color
-        tbLine.BackgroundColor3 = color
-        tbLineGlow.BackgroundColor3 = color
-        verLbl.TextColor3 = color
-        verBadge.BackgroundColor3 = color
-        vbSk.Color = color
-        glowOuter.BackgroundColor3 = color
-        glowStroke.Color = color
-        tabIndicator.BackgroundColor3 = color
-        tabGlow.BackgroundColor3 = color
-    end)
-    for _, tb in ipairs(themeBtns) do
-        local active = tb.accent == color
-        tweenSmooth(tb.btn, { BackgroundTransparency = active and 0.2 or 0.7 }, 0.2)
-        local sk = tb.btn:FindFirstChildWhichIsA("UIStroke")
-        if sk then tweenSmooth(sk, { Transparency = active and 0.0 or 0.7 }, 0.2) end
+    topLine.BackgroundColor3 = color
+    tabIndicator.BackgroundColor3 = color
+    pStroke.Color = color
+
+    for _, tb in ipairs(themeBtnList) do
+        local active = (tb.color == color)
+        tb.btn.BorderColor3 = active and C.white or C.border
     end
-    -- Update tab colors
-    for tName, btn in pairs(tabBtns) do
-        if tName == activeTab then
-            tweenSmooth(btn, { TextColor3 = color }, 0.2)
-        end
-    end
-    notify("Tema aplicado!", color, "🎨")
+
+    -- Update all slider fills and knob borders (aesthetic)
+    notify("Theme applied!", color, "🎨")
 end
 
 for i, th in ipairs(themes) do
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 34, 0, 26)
     btn.LayoutOrder = i
     btn.BackgroundColor3 = th.color
-    btn.BackgroundTransparency = (th.color == C.accent) and 0.2 or 0.7
-    btn.BorderSizePixel = 0
+    btn.BorderSizePixel = 2
+    btn.BorderColor3 = th.color == C.accent and C.white or C.border
     btn.AutoButtonColor = false
     btn.Text = ""
     btn.Parent = themeRow
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 7)
-    local sk = Instance.new("UIStroke", btn)
-    sk.Color = C.white
-    sk.Transparency = (th.color == C.accent) and 0.0 or 0.7
-    sk.Thickness = 2
-    table.insert(themeBtns, { btn = btn, accent = th.color })
+    table.insert(themeBtnList, {btn = btn, color = th.color})
     local col = th.color
     btn.MouseButton1Click:Connect(function() applyTheme(col) end)
 end
 
--- Opacity slider
-mkSlider(styleContent, "Opacidade", 0, 0, 90, 2, function(v)
-    cfg.panelOpacity = v
-    panel.BackgroundTransparency = math.clamp(v / 100, 0, 0.92)
-end, function(v) return "Opacidade " .. v .. "%" end)
+-- Panel opacity slider
+mkLabel(mkCard(styleInner, 22, 3), "PANEL OPACITY", 10, C.accent, 8, 3, true)
 
--- ══════════════════════════════════════════════════════════
---  DRAGGABLE PANEL
--- ══════════════════════════════════════════════════════════
-do
-    local dragging, dragStart, startPos = false, nil, nil
-    topBar.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = i.Position
-            startPos = panel.Position
-        end
-    end)
-    topBar.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-    end)
-    UserInputService.InputChanged:Connect(function(i)
-        if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
-            local d = i.Position - dragStart
-            local newPos = UDim2.new(
-                startPos.X.Scale, startPos.X.Offset + d.X,
-                startPos.Y.Scale, startPos.Y.Offset + d.Y
-            )
-            tweenSmooth(panel, { Position = newPos }, 0.06)
-            tweenSmooth(glowOuter, {
-                Position = UDim2.new(
-                    newPos.X.Scale, newPos.X.Offset - 4,
-                    newPos.Y.Scale, newPos.Y.Offset - 4
-                )
-            }, 0.06)
-        end
-    end)
-end
-
--- ══════════════════════════════════════════════════════════
---  RESIZE HANDLE
--- ══════════════════════════════════════════════════════════
-local resizeHandle = Instance.new("TextButton")
-resizeHandle.Size = UDim2.new(0, 20, 0, 20)
-resizeHandle.Position = UDim2.new(1, -20, 1, -20)
-resizeHandle.BackgroundTransparency = 1
-resizeHandle.Text = "⋱"
-resizeHandle.TextColor3 = C.muted
-resizeHandle.TextSize = 14
-resizeHandle.Font = Enum.Font.GothamBold
-resizeHandle.ZIndex = 15
-resizeHandle.AutoButtonColor = false
-resizeHandle.Parent = panel
-
-do
-    local resizing, resStart, startSize = false, nil, nil
-    resizeHandle.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then
-            resizing = true
-            resStart = i.Position
-            startSize = panel.Size
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(i)
-        if resizing and i.UserInputType == Enum.UserInputType.MouseMovement then
-            local d = i.Position - resStart
-            local nw = math.clamp(startSize.X.Offset + d.X, MIN_W, MAX_W)
-            local nh = math.clamp(startSize.Y.Offset + d.Y, MIN_H, MAX_H)
-            panel.Size = UDim2.new(0, nw, 0, nh)
-            glowOuter.Size = UDim2.new(0, nw + 8, 0, nh + 8)
-        end
-    end)
-    UserInputService.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then resizing = false end
-    end)
-end
+mkSlider(styleInner, "Background Opacity", 0, 0, 85, 4, function(v)
+    panel.BackgroundTransparency = v / 100
+end)
 
 -- ══════════════════════════════════════════════════════════
 --  ESP SYSTEM
@@ -1541,7 +1260,7 @@ local function addESP(plr)
     bb.Name = "ESP_BB_" .. plr.Name
     bb.Adornee = head
     bb.AlwaysOnTop = true
-    bb.Size = UDim2.new(0, 130, 0, 45)
+    bb.Size = UDim2.new(0, 120, 0, 38)
     bb.StudsOffset = Vector3.new(0, 3.5, 0)
     bb.Parent = CoreGui
 
@@ -1549,8 +1268,8 @@ local function addESP(plr)
     nl.Size = UDim2.new(1, 0, 0.5, 0)
     nl.BackgroundTransparency = 1
     nl.Font = Enum.Font.GothamBold
-    nl.TextSize = 15
-    nl.TextColor3 = Color3.new(1, 1, 1)
+    nl.TextSize = 13
+    nl.TextColor3 = C.white
     nl.TextStrokeTransparency = 0.4
     nl.Text = plr.Name
     nl.Parent = bb
@@ -1560,7 +1279,7 @@ local function addESP(plr)
     dl.Position = UDim2.new(0, 0, 0.5, 0)
     dl.BackgroundTransparency = 1
     dl.Font = Enum.Font.Gotham
-    dl.TextSize = 13
+    dl.TextSize = 11
     dl.TextColor3 = C.accent
     dl.TextStrokeTransparency = 0.4
     dl.Text = "0m"
@@ -1576,7 +1295,7 @@ local function addESP(plr)
         end)
     end)
 
-    obj.espObjs[plr] = { hl = hl, bb = bb, cn = cn }
+    obj.espObjs[plr] = {hl = hl, bb = bb, cn = cn}
 end
 
 local espLoop = task.spawn(function()
@@ -1588,11 +1307,8 @@ local espLoop = task.spawn(function()
             for _, plr in ipairs(Players:GetPlayers()) do
                 if plr ~= player and plr.Character then
                     local same = cfg.teamCheck and plr.Team and player.Team and plr.Team == player.Team
-                    if not same and not obj.espObjs[plr] then
-                        addESP(plr)
-                    elseif same then
-                        removeESP(plr)
-                    end
+                    if not same and not obj.espObjs[plr] then addESP(plr)
+                    elseif same then removeESP(plr) end
                 end
             end
         end
@@ -1616,10 +1332,12 @@ local refreshLoop = task.spawn(function()
                 notify("ESP Refreshed", C.accent, "🔄")
                 lastESPRefresh = os.time()
             else
-                stRefresh.Text = string.format("Refresh: %d:%02d", math.floor(rem / 60), rem % 60)
+                pcall(function()
+                    stRefresh.Text = string.format("ESP Refresh: %d:%02d", math.floor(rem / 60), rem % 60)
+                end)
             end
         else
-            stRefresh.Text = "Auto-Refresh: Off"
+            pcall(function() stRefresh.Text = "Auto-Refresh: Off" end)
         end
     end
 end)
@@ -1647,19 +1365,17 @@ RunService.Stepped:Connect(function()
 end)
 
 -- ══════════════════════════════════════════════════════════
---  AIMBOT SYSTEM (Normal + Silent + Trigger)
+--  AIMBOT SYSTEM
 -- ══════════════════════════════════════════════════════════
-
--- FOV circle
 pcall(function()
     obj.fovCircle = Drawing.new("Circle")
-    obj.fovCircle.Thickness = 2.5
+    obj.fovCircle.Thickness = 2
     obj.fovCircle.NumSides = 64
     obj.fovCircle.Radius = cfg.aimbotFOV
     obj.fovCircle.Color = C.aimbot
     obj.fovCircle.Visible = false
     obj.fovCircle.Filled = false
-    obj.fovCircle.Transparency = 0.8
+    obj.fovCircle.Transparency = 0.7
 end)
 
 local function getAimPart(char)
@@ -1671,7 +1387,7 @@ local function getAimPart(char)
     elseif cfg.aimbotPart == "Closest" then
         local mp = UserInputService:GetMouseLocation()
         local best, bestD = nil, math.huge
-        for _, nm in ipairs({"Head", "UpperTorso", "Torso", "LowerTorso", "HumanoidRootPart", "LeftUpperArm", "RightUpperArm", "LeftUpperLeg", "RightUpperLeg"}) do
+        for _, nm in ipairs({"Head", "UpperTorso", "Torso", "LowerTorso", "HumanoidRootPart"}) do
             local part = char:FindFirstChild(nm)
             if part and part:IsA("BasePart") then
                 local sp, on = camera:WorldToViewportPoint(part.Position)
@@ -1687,22 +1403,22 @@ local function getAimPart(char)
 end
 
 local function isValidTarget(plr)
-    if not plr or plr == player or not plr.Character then return false end
-
-    -- Team check
-    if cfg.teamCheck and plr.Team and player.Team and plr.Team == player.Team then return false end
-
-    local hum = plr.Character:FindFirstChild("Humanoid")
+    if not plr or not plr.Character or not plr.Character.Parent then return false end
+    local hum = plr.Character:FindFirstChildOfClass("Humanoid")
     if not hum or hum.Health <= 0 then return false end
+    if cfg.teamCheck and plr.Team and player.Team and plr.Team == player.Team then return false end
+    if cfg.healthCheck and hum.Health <= cfg.healthMin then return false end
 
-    -- Health check
-    if cfg.healthCheck and hum.Health < cfg.healthMin then return false end
+    local part = getAimPart(plr.Character)
+    if not part then return false end
 
-    -- Distance check
-    local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-    if hrp then
-        local dist = (hrp.Position - camera.CFrame.Position).Magnitude
-        if dist > cfg.maxDistance then return false end
+    local dist = (part.Position - camera.CFrame.Position).Magnitude
+    if dist > cfg.maxDistance then return false end
+
+    if cfg.visibleCheck then
+        local ray = Ray.new(camera.CFrame.Position, (part.Position - camera.CFrame.Position).Unit * dist)
+        local hit = workspace:FindPartOnRayWithIgnoreList(ray, {player.Character, camera})
+        if hit and not hit:IsDescendantOf(plr.Character) then return false end
     end
 
     return true
@@ -1711,27 +1427,15 @@ end
 local function closestInFOV()
     local mp = UserInputService:GetMouseLocation()
     local best, bestD = nil, math.huge
-
     for _, plr in ipairs(Players:GetPlayers()) do
-        if isValidTarget(plr) then
+        if plr ~= player and isValidTarget(plr) then
             local part = getAimPart(plr.Character)
             if part then
                 local sp, on = camera:WorldToViewportPoint(part.Position)
                 if on then
                     local d = (Vector2.new(sp.X, sp.Y) - mp).Magnitude
                     if d < cfg.aimbotFOV and d < bestD then
-                        if not cfg.visibleCheck then
-                            best = plr; bestD = d
-                        else
-                            local ray = Ray.new(
-                                camera.CFrame.Position,
-                                (part.Position - camera.CFrame.Position).Unit * 500
-                            )
-                            local hit = workspace:FindPartOnRayWithIgnoreList(ray, {player.Character, camera})
-                            if hit and hit:IsDescendantOf(plr.Character) then
-                                best = plr; bestD = d
-                            end
-                        end
+                        best = plr; bestD = d
                     end
                 end
             end
@@ -1740,60 +1444,73 @@ local function closestInFOV()
     return best
 end
 
--- ── Silent Aim Hook ────────────────────────────────────────
+-- ── Silent Aim ─────────────────────────────────────────────
 local function setupSilentAim()
-    -- Silent aim usa hookmetamethod para redirecionar mouse.Hit
-    -- Funciona interceptando __index no mouse
+    if obj.silentAimHook then return end
     pcall(function()
-        if not hookmetamethod then return end
-        if obj.silentAimHook then return end -- já hookado
+        local mt = getrawmetatable(game)
+        local oldIndex = mt.__index
+        local oldNamecall = mt.__namecall
+        setreadonly(mt, false)
 
-        local oldIndex
-        oldIndex = hookmetamethod(game, "__index", newcclosure(function(self, key)
-            if st.silentAim and st.running then
-                -- Encontrar o target mais próximo no FOV
-                local target = closestInFOV()
-                if target and target.Character then
-                    local part = getAimPart(target.Character)
-                    if part then
-                        if (self == mouse or tostring(self) == "Mouse") then
-                            if key == "Hit" then
-                                return CFrame.new(part.Position)
-                            elseif key == "Target" then
-                                return part
-                            end
+        mt.__index = newcclosure(function(self, key)
+            if st.silentAim and obj.lockedTarget and obj.lockedTarget.Character then
+                local part = getAimPart(obj.lockedTarget.Character)
+                if part then
+                    if self == mouse then
+                        if key == "Hit" then
+                            return CFrame.new(part.Position)
+                        elseif key == "Target" then
+                            return part
                         end
                     end
                 end
             end
             return oldIndex(self, key)
-        end))
+        end)
 
+        mt.__namecall = newcclosure(function(self, ...)
+            local method = getnamecallmethod()
+            if st.silentAim and obj.lockedTarget and obj.lockedTarget.Character then
+                local part = getAimPart(obj.lockedTarget.Character)
+                if part then
+                    if method == "FindPartOnRayWithIgnoreList" or method == "FindPartOnRay" then
+                        local args = {...}
+                        if typeof(args[1]) == "Ray" then
+                            local origin = args[1].Origin
+                            local newDir = (part.Position - origin).Unit * 1000
+                            args[1] = Ray.new(origin, newDir)
+                            return oldNamecall(self, unpack(args))
+                        end
+                    end
+                end
+            end
+            return oldNamecall(self, ...)
+        end)
+
+        setreadonly(mt, true)
         obj.silentAimHook = true
     end)
 end
 
--- ── Trigger Bot Logic ──────────────────────────────────────
+-- ── Trigger Bot ────────────────────────────────────────────
 local function triggerBotTick()
     if not st.triggerBot or not st.running then return end
-
     local now = tick()
     if now - lastTriggerFire < cfg.triggerDelay then return end
 
     local mp = UserInputService:GetMouseLocation()
-    local best = nil
-    local bestD = math.huge
+    local best, bestD = nil, math.huge
 
     for _, plr in ipairs(Players:GetPlayers()) do
-        if isValidTarget(plr) then
+        if plr ~= player and isValidTarget(plr) then
             local part = getAimPart(plr.Character)
             if part then
                 local sp, on = camera:WorldToViewportPoint(part.Position)
                 if on then
                     local d = (Vector2.new(sp.X, sp.Y) - mp).Magnitude
                     if d < cfg.triggerFOV and d < bestD then
-                        best = plr
-                        bestD = d
+                        best = plr; bestD = d
                     end
                 end
             end
@@ -1802,34 +1519,24 @@ local function triggerBotTick()
 
     if best then
         lastTriggerFire = now
-        -- Simula um click
+        pcall(function() mouse1click() end)
         pcall(function()
-            mouse1click()
-        end)
-        -- Fallback: tenta VirtualInputManager
-        pcall(function()
-            VirtualInputManager:SendMouseButtonEvent(
-                mp.X, mp.Y, 0, true, game, 0
-            )
+            VirtualInputManager:SendMouseButtonEvent(mp.X, mp.Y, 0, true, game, 0)
             task.delay(0.05, function()
-                VirtualInputManager:SendMouseButtonEvent(
-                    mp.X, mp.Y, 0, false, game, 0
-                )
+                VirtualInputManager:SendMouseButtonEvent(mp.X, mp.Y, 0, false, game, 0)
             end)
         end)
     end
 end
 
--- ── Main Aimbot RenderStepped ──────────────────────────────
-local aimConn = RunService.RenderStepped:Connect(function(dt)
+-- ── Main RenderStepped ─────────────────────────────────────
+local aimConn = RunService.RenderStepped:Connect(function()
     if not st.running then return end
 
     local mp = UserInputService:GetMouseLocation()
 
-    -- Trigger bot tick (independente do aimbot)
     triggerBotTick()
 
-    -- Silent aim setup (one-time)
     if st.silentAim and not obj.silentAimHook then
         setupSilentAim()
     end
@@ -1841,12 +1548,9 @@ local aimConn = RunService.RenderStepped:Connect(function(dt)
             obj.fovCircle.Visible = true
         end
 
-        if obj.lockedTarget then
-            if not isValidTarget(obj.lockedTarget) then
-                obj.lockedTarget = nil
-            end
+        if obj.lockedTarget and not isValidTarget(obj.lockedTarget) then
+            obj.lockedTarget = nil
         end
-
         if not obj.lockedTarget then
             obj.lockedTarget = closestInFOV()
         end
@@ -1855,7 +1559,7 @@ local aimConn = RunService.RenderStepped:Connect(function(dt)
         obj.lockedTarget = nil
     end
 
-    -- Camera pull (normal aimbot — NÃO silent)
+    -- Normal aimbot camera pull (not silent)
     if st.aimbot and not st.silentAim and rmbDown and obj.lockedTarget and obj.lockedTarget.Character then
         local part = getAimPart(obj.lockedTarget.Character)
         if part then
@@ -1874,7 +1578,7 @@ local aimConn = RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-    -- ── Update status pills ────────────────────────────────
+    -- Update status
     pcall(function()
         stESP.Text = "ESP " .. (st.esp and "ON" or "OFF")
         stESP.TextColor3 = st.esp and C.success or C.muted
@@ -1890,10 +1594,9 @@ local aimConn = RunService.RenderStepped:Connect(function(dt)
         stNoclip.Text = "Noclip " .. (st.noclip and "ON" or "OFF")
         stNoclip.TextColor3 = st.noclip and C.success or C.muted
 
-        -- Silent & Trigger status
-        stSilent.Text = "Silent: " .. (st.silentAim and "ON" or "OFF")
+        stSilent.Text = "Silent " .. (st.silentAim and "ON" or "OFF")
         stSilent.TextColor3 = st.silentAim and C.silent or C.muted
-        stTrigger.Text = "Trigger: " .. (st.triggerBot and "ON" or "OFF")
+        stTrigger.Text = "Trigger " .. (st.triggerBot and "ON" or "OFF")
         stTrigger.TextColor3 = st.triggerBot and C.trigger or C.muted
 
         -- Lock card
@@ -1901,19 +1604,16 @@ local aimConn = RunService.RenderStepped:Connect(function(dt)
             lockLbl.Text = "LOCKED: " .. obj.lockedTarget.Name
             lockLbl.TextColor3 = C.error
             lockSub.Text = "Tracking " .. cfg.aimbotPart
-            tweenSmooth(lockGlow, { Transparency = 0.3, Color = C.error }, 0.2)
-            tweenSmooth(lockCard, { BackgroundColor3 = Color3.fromRGB(50, 12, 12) }, 0.2)
+            lockCard.BackgroundColor3 = Color3.fromRGB(50, 12, 12)
         else
             lockLbl.Text = "No Target"
             lockLbl.TextColor3 = C.aimbot
             lockSub.Text = "Hold RMB to lock"
-            tweenSmooth(lockGlow, { Transparency = 0.85, Color = C.aimbot }, 0.3)
-            tweenSmooth(lockCard, { BackgroundColor3 = Color3.fromRGB(30, 15, 45) }, 0.3)
+            lockCard.BackgroundColor3 = Color3.fromRGB(30, 15, 45)
         end
 
-        -- Aimbot info
         fovInfoLbl.Text = "FOV: " .. cfg.aimbotFOV .. " | Smooth: " .. cfg.aimSmooth
-        fovSubLbl.Text = "Part: " .. cfg.aimbotPart .. " | MaxDist: " .. cfg.maxDistance
+        fovSubLbl.Text = "Part: " .. cfg.aimbotPart .. " | Dist: " .. cfg.maxDistance
     end)
 end)
 
@@ -2031,171 +1731,191 @@ end)
 local plrRemHit = Players.PlayerRemoving:Connect(resetHitbox)
 
 -- ══════════════════════════════════════════════════════════
---  EJECT
+--  TOGGLE FUNCTIONS (shared by buttons and hotkeys)
 -- ══════════════════════════════════════════════════════════
-local function eject()
-    print("🚫 Ejecting v4.0...")
-    st.running = false
-    st.esp = false; st.aimbot = false; st.fly = false
-    st.hitbox = false; st.noclip = false; rmbDown = false
-    st.silentAim = false; st.triggerBot = false
-    setNoclip(false)
-
-    -- Stop spectate
-    if st.spectating then stopSpectate() end
-
-    pcall(function() aimConn:Disconnect() end)
-    pcall(function() flyConn:Disconnect() end)
-    pcall(function() charAddConn:Disconnect() end)
-    pcall(function() noclipCharConn:Disconnect() end)
-    pcall(function() plrRemESP:Disconnect() end)
-    pcall(function() plrRemHit:Disconnect() end)
-    pcall(function() task.cancel(espLoop) end)
-    pcall(function() task.cancel(refreshLoop) end)
-    pcall(function() task.cancel(hitLoop) end)
-
-    clearESP(); resetAllHitboxes(); disableFly()
-
-    local char = player.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if hrp then
-        for _, o in pairs(hrp:GetChildren()) do
-            if o:IsA("BodyVelocity") or o:IsA("BodyGyro") then o:Destroy() end
-        end
+local function updateBtnVisual(btn, bar, on, activeColor)
+    tween(bar, {BackgroundColor3 = on and activeColor or C.muted}, 0.2)
+    if on then
+        btn.Text = btn.Text:gsub(" ✓$", "") .. " ✓"
+    else
+        btn.Text = btn.Text:gsub(" ✓$", "")
     end
+end
 
-    pcall(function()
-        if obj.fovCircle then obj.fovCircle:Remove(); obj.fovCircle = nil end
-    end)
+local function toggleESP()
+    if not st.running then return end
+    st.esp = not st.esp
+    updateBtnVisual(espBtn, espBar, st.esp, C.success)
+    if not st.esp then clearESP() else lastESPRefresh = os.time() end
+    notify(st.esp and "ESP ON" or "ESP OFF", st.esp and C.success or C.error, "👁️")
+end
 
-    obj.lockedTarget = nil
+local function toggleAimbot()
+    if not st.running then return end
+    st.aimbot = not st.aimbot
+    updateBtnVisual(aimBtn, aimBar, st.aimbot, C.aimbot)
+    if not st.aimbot then obj.lockedTarget = nil; rmbDown = false end
+    notify(st.aimbot and "Aimbot ON" or "Aimbot OFF", st.aimbot and C.aimbot or C.error, "🎯")
+end
 
-    -- Fade out
-    pcall(function()
-        tween(panel, { BackgroundTransparency = 1 }, 0.4)
-        tween(glowOuter, { BackgroundTransparency = 1 }, 0.4)
-        tween(pStroke, { Transparency = 1 }, 0.3)
-    end)
+local function toggleFly()
+    if not st.running then return end
+    st.fly = not st.fly
+    updateBtnVisual(flyBtn, flyBar, st.fly, C.fly)
+    if st.fly then enableFly() else disableFly() end
+    notify(st.fly and "Fly ON" or "Fly OFF", st.fly and C.fly or C.error, "✈️")
+end
 
-    task.delay(0.5, function()
-        for _, g in pairs(playerGui:GetChildren()) do
-            if g.Name == "UtilityGUI_v4" or g.Name:match("^Notif_") then
-                g:Destroy()
+local function toggleHitbox()
+    if not st.running then return end
+    st.hitbox = not st.hitbox
+    updateBtnVisual(hitBtn, hitBar, st.hitbox, C.warning)
+    if not st.hitbox then resetAllHitboxes() end
+    notify(st.hitbox and "Hitbox ON" or "Hitbox OFF", st.hitbox and C.warning or C.error, "📦")
+end
+
+local function toggleNoclip()
+    if not st.running then return end
+    st.noclip = not st.noclip
+    updateBtnVisual(noclipBtn, noclipBar, st.noclip, C.success)
+    setNoclip(st.noclip)
+    notify(st.noclip and "Noclip ON" or "Noclip OFF", st.noclip and C.success or C.error, "🚶")
+end
+
+local function toggleSilent()
+    if not st.running then return end
+    st.silentAim = not st.silentAim
+    silentToggle.setState(st.silentAim)
+    notify(st.silentAim and "Silent Aim ON" or "Silent Aim OFF", st.silentAim and C.silent or C.error, "🔇")
+end
+
+local function toggleTrigger()
+    if not st.running then return end
+    st.triggerBot = not st.triggerBot
+    triggerToggle.setState(st.triggerBot)
+    notify(st.triggerBot and "Trigger Bot ON" or "Trigger Bot OFF", st.triggerBot and C.trigger or C.error, "🔫")
+end
+
+local function toggleGUI()
+    if not st.running then return end
+    st.gui = not st.gui
+    panel.Visible = st.gui
+    notify(st.gui and "GUI Visible" or "GUI Hidden", st.gui and C.accent or C.error, "👁️")
+end
+
+local function doEject()
+    if not st.running then return end
+    notify("Ejecting...", C.error, "⚠️")
+
+    task.delay(0.8, function()
+        st.running = false
+        st.esp = false; st.aimbot = false; st.fly = false
+        st.hitbox = false; st.noclip = false; rmbDown = false
+        st.silentAim = false; st.triggerBot = false
+        setNoclip(false)
+        if st.spectating then stopSpectate() end
+
+        pcall(function() aimConn:Disconnect() end)
+        pcall(function() flyConn:Disconnect() end)
+        pcall(function() charAddConn:Disconnect() end)
+        pcall(function() noclipCharConn:Disconnect() end)
+        pcall(function() plrRemESP:Disconnect() end)
+        pcall(function() plrRemHit:Disconnect() end)
+        pcall(function() task.cancel(espLoop) end)
+        pcall(function() task.cancel(refreshLoop) end)
+        pcall(function() task.cancel(hitLoop) end)
+
+        clearESP(); resetAllHitboxes(); disableFly()
+
+        local char = player.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            for _, o in pairs(hrp:GetChildren()) do
+                if o:IsA("BodyVelocity") or o:IsA("BodyGyro") then o:Destroy() end
             end
         end
-        for _, g in pairs(CoreGui:GetChildren()) do
-            if g.Name and g.Name:match("ESP_BB_") then g:Destroy() end
-        end
+
         pcall(function()
-            if screenGui and screenGui.Parent then screenGui:Destroy() end
+            if obj.fovCircle then obj.fovCircle:Remove(); obj.fovCircle = nil end
         end)
-        obj.espObjs = {}; obj.origSizes = {}
-        print("✅ Ejected v4.0!")
+
+        obj.lockedTarget = nil
+
+        tween(panel, {BackgroundTransparency = 1}, 0.3)
+        task.delay(0.4, function()
+            for _, g in pairs(playerGui:GetChildren()) do
+                if g.Name:match("^UtilityGUI") or g.Name:match("^Notif_") then g:Destroy() end
+            end
+            for _, g in pairs(CoreGui:GetChildren()) do
+                if g.Name and g.Name:match("ESP_BB_") then g:Destroy() end
+            end
+            pcall(function() if screenGui and screenGui.Parent then screenGui:Destroy() end end)
+            obj.espObjs = {}; obj.origSizes = {}
+            print("✅ Ejected v5.0!")
+        end)
     end)
 end
 
-ejectBtn.MouseButton1Click:Connect(function()
-    if not st.running then return end
-    notify("Ejecting...", C.error, "⚠️")
-    task.delay(0.8, eject)
-end)
+-- Connect action buttons
+espBtn.MouseButton1Click:Connect(toggleESP)
+aimBtn.MouseButton1Click:Connect(toggleAimbot)
+flyBtn.MouseButton1Click:Connect(toggleFly)
+hitBtn.MouseButton1Click:Connect(toggleHitbox)
+noclipBtn.MouseButton1Click:Connect(toggleNoclip)
+ejectBtn.MouseButton1Click:Connect(doEject)
+closeLbl.MouseButton1Click:Connect(doEject)
+minLbl.MouseButton1Click:Connect(toggleGUI)
 
 -- ══════════════════════════════════════════════════════════
---  BUTTON CONNECTIONS
+--  HOTKEYS (uses dynamic keybinds)
 -- ══════════════════════════════════════════════════════════
-espBtn.MouseButton1Click:Connect(function()
-    if not st.running then return end
-    st.esp = not st.esp
-    updBtn(espBtn, espSk, C.success, st.esp, st.esp and "👁️  ESP  ✓" or "👁️  ESP")
-    if not st.esp then clearESP() else lastESPRefresh = os.time() end
-    notify(st.esp and "ESP Enabled" or "ESP Disabled", st.esp and C.success or C.error, st.esp and "👁️" or "❌")
-end)
+local bindActions = {
+    esp     = toggleESP,
+    aimbot  = toggleAimbot,
+    fly     = toggleFly,
+    hitbox  = toggleHitbox,
+    noclip  = toggleNoclip,
+    gui     = toggleGUI,
+    eject   = doEject,
+    silent  = toggleSilent,
+    trigger = toggleTrigger,
+}
 
-aimBtn.MouseButton1Click:Connect(function()
-    if not st.running then return end
-    st.aimbot = not st.aimbot
-    updBtn(aimBtn, aimSk, C.aimbot, st.aimbot, st.aimbot and "🎯  AIMBOT  ✓" or "🎯  AIMBOT")
-    if not st.aimbot then obj.lockedTarget = nil; rmbDown = false end
-    notify(st.aimbot and "Aimbot Enabled" or "Aimbot Disabled", st.aimbot and C.aimbot or C.error, "🎯")
-end)
-
-flyBtn.MouseButton1Click:Connect(function()
-    if not st.running then return end
-    st.fly = not st.fly
-    updBtn(flyBtn, flySk, C.fly, st.fly, st.fly and "✈️  FLY  ✓" or "✈️  FLY")
-    if st.fly then enableFly() else disableFly() end
-    notify(st.fly and "Fly Enabled" or "Fly Disabled", st.fly and C.fly or C.error, "✈️")
-end)
-
-hitBtn.MouseButton1Click:Connect(function()
-    if not st.running then return end
-    st.hitbox = not st.hitbox
-    updBtn(hitBtn, hitSk, C.warning, st.hitbox, st.hitbox and "📦  HITBOX  ✓" or "📦  HITBOX")
-    if not st.hitbox then resetAllHitboxes() end
-    notify(st.hitbox and "Hitbox Enabled" or "Hitbox Disabled", st.hitbox and C.warning or C.error, "📦")
-end)
-
-noclipBtn.MouseButton1Click:Connect(function()
-    if not st.running then return end
-    st.noclip = not st.noclip
-    updBtn(noclipBtn, noclipSk, C.success, st.noclip, st.noclip and "🚶  NOCLIP  ✓" or "🚶  NOCLIP")
-    setNoclip(st.noclip)
-    notify(st.noclip and "Noclip Enabled" or "Noclip Disabled", st.noclip and C.success or C.error, "🚶")
-end)
-
--- ══════════════════════════════════════════════════════════
---  HOTKEYS
--- ══════════════════════════════════════════════════════════
 UserInputService.InputBegan:Connect(function(i, gp)
-    if gp or not st.running then return end
+    if not st.running then return end
 
+    -- Handle keybind assignment
+    if waitingForBind and i.KeyCode and i.KeyCode ~= Enum.KeyCode.Unknown then
+        local fn = waitingForBind
+        keybinds[fn] = i.KeyCode
+        local btn = bindButtons[fn]
+        if btn then
+            btn.Text = "[" .. i.KeyCode.Name .. "]"
+            btn.TextColor3 = C.accent
+            tween(btn, {BackgroundColor3 = C.bgInput}, 0.15)
+        end
+        notify("Bound " .. fn .. " to " .. i.KeyCode.Name, C.accent, "🎮")
+        waitingForBind = nil
+        return
+    end
+
+    if gp then return end
+
+    -- RMB for aimbot
     if i.UserInputType == Enum.UserInputType.MouseButton2 then
         if st.aimbot then rmbDown = true end
         return
     end
 
     if not i.KeyCode then return end
-    local k = i.KeyCode
 
-    if k == Enum.KeyCode.T then
-        st.esp = not st.esp
-        updBtn(espBtn, espSk, C.success, st.esp, st.esp and "👁️  ESP  ✓" or "👁️  ESP")
-        if not st.esp then clearESP() else lastESPRefresh = os.time() end
-        notify(st.esp and "ESP Enabled" or "ESP Disabled", st.esp and C.success or C.error, st.esp and "👁️" or "❌")
-
-    elseif k == Enum.KeyCode.G then
-        st.aimbot = not st.aimbot
-        updBtn(aimBtn, aimSk, C.aimbot, st.aimbot, st.aimbot and "🎯  AIMBOT  ✓" or "🎯  AIMBOT")
-        if not st.aimbot then obj.lockedTarget = nil; rmbDown = false end
-        notify(st.aimbot and "Aimbot Enabled" or "Aimbot Disabled", st.aimbot and C.aimbot or C.error, "🎯")
-
-    elseif k == Enum.KeyCode.F then
-        st.fly = not st.fly
-        updBtn(flyBtn, flySk, C.fly, st.fly, st.fly and "✈️  FLY  ✓" or "✈️  FLY")
-        if st.fly then enableFly() else disableFly() end
-        notify(st.fly and "Fly Enabled" or "Fly Disabled", st.fly and C.fly or C.error, "✈️")
-
-    elseif k == Enum.KeyCode.H then
-        st.hitbox = not st.hitbox
-        updBtn(hitBtn, hitSk, C.warning, st.hitbox, st.hitbox and "📦  HITBOX  ✓" or "📦  HITBOX")
-        if not st.hitbox then resetAllHitboxes() end
-        notify(st.hitbox and "Hitbox Enabled" or "Hitbox Disabled", st.hitbox and C.warning or C.error, "📦")
-
-    elseif k == Enum.KeyCode.U then
-        st.noclip = not st.noclip
-        updBtn(noclipBtn, noclipSk, C.success, st.noclip, st.noclip and "🚶  NOCLIP  ✓" or "🚶  NOCLIP")
-        setNoclip(st.noclip)
-        notify(st.noclip and "Noclip Enabled" or "Noclip Disabled", st.noclip and C.success or C.error, "🚶")
-
-    elseif k == Enum.KeyCode.Y then
-        st.gui = not st.gui
-        panel.Visible = st.gui
-        glowOuter.Visible = st.gui
-        notify(st.gui and "GUI Visible" or "GUI Hidden", st.gui and C.accent or C.error, st.gui and "👁️" or "❌")
-
-    elseif k == Enum.KeyCode.P then
-        notify("Ejecting...", C.error, "⚠️")
-        task.delay(0.8, eject)
+    -- Check keybinds
+    for fn, key in pairs(keybinds) do
+        if i.KeyCode == key then
+            local action = bindActions[fn]
+            if action then action() end
+            return
+        end
     end
 end)
 
@@ -2212,52 +1932,18 @@ end)
 --  STARTUP
 -- ══════════════════════════════════════════════════════════
 pcall(function()
-    -- Start invisible
     panel.BackgroundTransparency = 1
-    pStroke.Transparency = 1
-    glowOuter.BackgroundTransparency = 1
-
-    for _, child in ipairs(panel:GetChildren()) do
-        if child:IsA("Frame") or child:IsA("ScrollingFrame") then
-            pcall(function() child.BackgroundTransparency = 1 end)
-        end
-    end
-
     task.wait(0.2)
+    tween(panel, {BackgroundTransparency = 0}, 0.5)
 
-    -- Fade in
-    tween(panel, { BackgroundTransparency = 0.05 }, 0.6, Enum.EasingStyle.Quint)
-    tween(pStroke, { Transparency = 0.5 }, 0.8)
-    tween(glowOuter, { BackgroundTransparency = 0.85 }, 1)
-
-    task.delay(0.15, function()
-        tween(topBar, { BackgroundTransparency = 0.2 }, 0.5)
-        tween(tbFix, { BackgroundTransparency = 0.2 }, 0.5)
-    end)
-
-    task.delay(0.25, function()
-        tween(tabBar, { BackgroundTransparency = 0.4 }, 0.5)
-    end)
-
-    task.delay(0.4, function()
-        for _, child in ipairs(statusContent:GetChildren()) do
-            if child:IsA("Frame") then
-                tween(child, { BackgroundTransparency = 0.15 }, 0.4)
-                task.wait(0.08)
-            end
-        end
-    end)
-
-    -- Refresh player list on first load
-    task.delay(1, function()
+    task.delay(0.5, function()
         refreshPlayerList()
     end)
 
-    task.wait(0.6)
-    notify("Utilities v4.0 Loaded!", C.success, "⚡")
-    print("✅ Utilities v4.0 — Full Edition")
-    print("📌 T=ESP | G=Aimbot | F=Fly | H=Hitbox | U=Noclip | Y=GUI | P=Eject")
-    print("🎯 RMB segura para mirar | Parte: " .. cfg.aimbotPart)
-    print("🔇 Silent Aim + 🔫 Trigger Bot disponíveis na aba Aimbot")
-    print("👥 Players tab: Spectate, Fling, TP")
+    task.wait(0.5)
+    notify("Utilities v5.0 Loaded!", C.success, "⚡")
+    print("✅ Utilities v5.0 — Rectangular UI + Keybind Selector")
+    print("🎮 Default keys: T=ESP G=Aimbot F=Fly H=Hitbox U=Noclip Y=GUI P=Eject")
+    print("🎮 J=Silent Aim K=Trigger Bot")
+    print("🎮 All keybinds configurable in Binds tab")
 end)
