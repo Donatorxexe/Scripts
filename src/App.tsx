@@ -1,248 +1,170 @@
-import { useState } from 'react'
+import { useState } from 'react';
 
-function App() {
-  const [copied, setCopied] = useState<string | null>(null)
+const features = [
+  { cat: "🎯 Aimbot", items: ["Aimbot Normal (Smooth 0-100)", "Silent Aim (hookmetamethod)", "Trigger Bot (Auto-fire + delay)", "Team Check toggle", "Visible Check (Raycast)", "Health Check (Min HP% funcional)", "Hit Part (Head/Torso/Closest)", "Max Distance (50-2000)", "FOV Circle animado"] },
+  { cat: "👁️ Visuals", items: ["ESP Highlights + Names + Distance", "ESP Health Bars", "ESP Distance Filter", "Crosshair (Cross/Dot/Circle/T-Cross)", "Target HUD (nome+HP+dist)", "Watermark (FPS/Ping)", "Kill Feed (últimas 8)"] },
+  { cat: "⚡ Movement", items: ["Fly (WASD + Space/Ctrl)", "Noclip", "Speed Hack (16-200)", "Infinite Jump", "TP to Cursor (RShift)", "Click TP (B+click)"] },
+  { cat: "🔧 Combat", items: ["Hitbox Expander (1-25x)", "Hitbox Transparency", "Trigger FOV + Delay ajustáveis"] },
+  { cat: "🌍 World", items: ["Fullbright (restaura original)", "Anti-AFK (VirtualUser)", "No Fall Damage", "Server Hop"] },
+  { cat: "👥 Players", items: ["Player List + HP Bars", "Spectate / Unspectate", "Fling (velocity-based)", "Teleport To (3 studs atrás)", "Auto-cleanup on leave"] },
+  { cat: "🎨 Customize", items: ["12 Color Themes + Rainbow Mode", "Panel Width/Height editável", "Panel Opacity slider", "16 Rebindable Keybinds + Reset", "Auto re-apply on respawn"] },
+  { cat: "🛡️ Safety", items: ["Panic Key (End) — desativa tudo", "Eject limpo (restaura lighting)", "Auto-cleanup de BodyVelocity/Gyro", "Original lighting saved/restored"] },
+];
 
-  const copyText = (text: string, id: string) => {
-    navigator.clipboard.writeText(text)
-    setCopied(id)
-    setTimeout(() => setCopied(null), 2000)
-  }
+const binds = [
+  ["T", "ESP"], ["G", "Aimbot"], ["J", "Silent Aim"], ["K", "Trigger Bot"],
+  ["F", "Fly"], ["H", "Hitbox"], ["U", "Noclip"], ["M", "Speed"],
+  ["N", "Inf Jump"], ["L", "Fullbright"], ["B", "Click TP"], ["V", "No Fall Dmg"],
+  ["RShift", "TP to Cursor"], ["Y", "Toggle GUI"], ["P", "Eject"],
+  ["End", "Panic Key"], ["RMB", "Aim Lock"],
+];
 
-  const loadstringGH = `loadstring(game:HttpGet("https://raw.githubusercontent.com/SEU_USER/SEU_REPO/main/Medusa_v6.lua"))()`
-  const loadstringPB = `loadstring(game:HttpGet("https://pastebin.com/raw/XXXXXXXX"))()`
+export default function App() {
+  const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<'features' | 'binds' | 'howto'>('features');
+
+  const loadstringExample = `loadstring(game:HttpGet("https://raw.githubusercontent.com/USER/REPO/main/Medusa_v8_Final.txt"))()`;
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
-    <div className="min-h-screen bg-[#0d0d14] text-white font-sans">
-      {/* Top accent line */}
-      <div className="h-[2px] bg-gradient-to-r from-purple-600 via-purple-400 to-purple-600" />
-
-      {/* Header */}
-      <header className="border-b border-[#28283a] bg-[#0a0a12]">
-        <div className="max-w-5xl mx-auto px-6 py-8">
-          <div className="flex items-center gap-4 mb-2">
-            <span className="text-4xl">🐍</span>
+    <div className="min-h-screen" style={{ background: '#0a0a10' }}>
+      {/* Hero */}
+      <div className="relative overflow-hidden" style={{ borderBottom: '1px solid #1a1a2e' }}>
+        <div className="absolute inset-0 opacity-20" style={{
+          background: 'radial-gradient(ellipse at 50% 0%, #00d4aa22 0%, transparent 60%)'
+        }} />
+        <div className="max-w-4xl mx-auto px-6 py-16 relative">
+          <div className="flex items-center gap-4 mb-4">
+            <span className="text-5xl">🐍</span>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                <span className="text-purple-400">MEDUSA</span>
-                <span className="text-[#555570] ml-2 text-lg font-normal">v6.0</span>
+              <h1 className="text-4xl font-black tracking-tight" style={{ color: '#00d4aa' }}>
+                MEDUSA
               </h1>
-              <p className="text-[#555570] text-sm mt-1">
-                Made by <span className="text-purple-400 font-semibold">.donatorexe.</span> • Premium Script
+              <div className="flex items-center gap-3 mt-1">
+                <span className="px-2 py-0.5 text-xs font-bold" style={{
+                  background: '#00d4aa22', color: '#00d4aa', border: '1px solid #00d4aa44'
+                }}>v9.0</span>
+                <span className="text-sm" style={{ color: '#666' }}>Made by .donatorexe.</span>
+              </div>
+            </div>
+          </div>
+          <p className="text-lg mt-4" style={{ color: '#888' }}>
+            Script Roblox completo — Aimbot, Silent Aim, Trigger Bot, ESP, Fly, Speed, Click TP,
+            No Fall Damage, Player List, 12 temas, 16 keybinds configuráveis. Tudo auditado e funcional.
+          </p>
+          <div className="flex gap-3 mt-6 flex-wrap">
+            <button onClick={() => copyToClipboard(loadstringExample)}
+              className="px-6 py-3 font-bold text-sm transition-all hover:brightness-110 cursor-pointer"
+              style={{ background: '#00d4aa', color: '#000' }}>
+              {copied ? '✅ Copiado!' : '📋 Copiar Loadstring'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="max-w-4xl mx-auto px-6">
+        <div className="flex gap-0 mt-8" style={{ borderBottom: '1px solid #1a1a2e' }}>
+          {(['features', 'binds', 'howto'] as const).map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)}
+              className="px-5 py-3 text-sm font-bold transition-all cursor-pointer"
+              style={{
+                color: activeTab === tab ? '#00d4aa' : '#555',
+                borderBottom: activeTab === tab ? '2px solid #00d4aa' : '2px solid transparent',
+                background: activeTab === tab ? '#00d4aa08' : 'transparent',
+              }}>
+              {tab === 'features' ? '⚡ Features' : tab === 'binds' ? '🎮 Keybinds' : '📖 Como Usar'}
+            </button>
+          ))}
+        </div>
+
+        {/* Features Tab */}
+        {activeTab === 'features' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-8">
+            {features.map(f => (
+              <div key={f.cat} className="p-4" style={{ background: '#12121a', border: '1px solid #1a1a2e' }}>
+                <h3 className="font-bold text-sm mb-3" style={{ color: '#00d4aa' }}>{f.cat}</h3>
+                <ul className="space-y-1.5">
+                  {f.items.map(item => (
+                    <li key={item} className="text-xs flex items-start gap-2" style={{ color: '#999' }}>
+                      <span style={{ color: '#00d4aa' }}>▸</span> {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Binds Tab */}
+        {activeTab === 'binds' && (
+          <div className="py-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {binds.map(([key, action]) => (
+                <div key={action} className="flex items-center justify-between p-3"
+                  style={{ background: '#12121a', border: '1px solid #1a1a2e' }}>
+                  <span className="text-xs" style={{ color: '#999' }}>{action}</span>
+                  <span className="px-2 py-1 text-xs font-mono font-bold"
+                    style={{ background: '#00d4aa15', color: '#00d4aa', border: '1px solid #00d4aa33' }}>
+                    {key}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs mt-4" style={{ color: '#555' }}>
+              Todas as 16 keybinds são editáveis na aba "Binds" dentro do script. Clica no botão da bind e carrega na nova tecla.
+            </p>
+          </div>
+        )}
+
+        {/* How to Tab */}
+        {activeTab === 'howto' && (
+          <div className="py-8 space-y-6">
+            <div className="p-4" style={{ background: '#12121a', border: '1px solid #1a1a2e' }}>
+              <h3 className="font-bold text-sm mb-3" style={{ color: '#00d4aa' }}>Opção 1: Loadstring (recomendado)</h3>
+              <ol className="space-y-2 text-xs" style={{ color: '#999' }}>
+                <li>1. Faz upload do ficheiro .txt para GitHub ou Pastebin</li>
+                <li>2. Copia o URL RAW do ficheiro</li>
+                <li>3. Cola no executor:</li>
+              </ol>
+              <div className="mt-3 p-3 font-mono text-xs relative group" style={{ background: '#0a0a12', border: '1px solid #1a1a2e' }}>
+                <code style={{ color: '#00d4aa' }}>{loadstringExample}</code>
+                <button onClick={() => copyToClipboard(loadstringExample)}
+                  className="absolute top-2 right-2 px-2 py-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  style={{ background: '#00d4aa22', color: '#00d4aa' }}>
+                  Copiar
+                </button>
+              </div>
+            </div>
+            <div className="p-4" style={{ background: '#12121a', border: '1px solid #1a1a2e' }}>
+              <h3 className="font-bold text-sm mb-3" style={{ color: '#00d4aa' }}>Opção 2: Direto</h3>
+              <p className="text-xs" style={{ color: '#999' }}>
+                Faz download do ficheiro .txt, abre-o, copia todo o conteúdo e cola directamente no executor.
               </p>
             </div>
-          </div>
-          <p className="text-[#888] text-sm mt-3 max-w-2xl">
-            300+ UI/GUI improvements • 10 Color Themes • Rectangular Flat Design • 
-            Custom Keybinds • Silent Aim + Trigger Bot • Player List with Spectate/Fling/TP
-          </p>
-        </div>
-      </header>
-
-      <main className="max-w-5xl mx-auto px-6 py-8 space-y-6">
-
-        {/* Download */}
-        <section className="bg-[#17171b] border border-[#28283a] p-6">
-          <h2 className="text-lg font-bold text-purple-400 mb-4 flex items-center gap-2">
-            <span>📥</span> Download Script
-          </h2>
-          <p className="text-[#888] text-sm mb-4">
-            Faz download do ficheiro .txt e faz upload para GitHub ou Pastebin. Depois usa o loadstring abaixo.
-          </p>
-          <a
-            href="/Medusa_v6.txt"
-            download="Medusa_v6.txt"
-            className="inline-block px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm transition-all"
-          >
-            ⬇ Download Medusa_v6.txt
-          </a>
-        </section>
-
-        {/* Loadstring */}
-        <section className="bg-[#17171b] border border-[#28283a] p-6">
-          <h2 className="text-lg font-bold text-purple-400 mb-4 flex items-center gap-2">
-            <span>🔗</span> Loadstring
-          </h2>
-
-          <div className="space-y-4">
-            {/* GitHub */}
-            <div>
-              <p className="text-xs text-[#666] mb-2 font-semibold uppercase tracking-wider">GitHub Raw</p>
-              <div className="flex gap-2">
-                <code className="flex-1 bg-[#0d0d14] border border-[#28283a] px-3 py-2 text-xs text-purple-300 font-mono overflow-x-auto">
-                  {loadstringGH}
-                </code>
-                <button
-                  onClick={() => copyText(loadstringGH, 'gh')}
-                  className="px-3 py-2 bg-[#28283a] hover:bg-purple-600 text-xs font-bold transition-all min-w-[70px]"
-                >
-                  {copied === 'gh' ? '✓ Copied' : 'Copy'}
-                </button>
-              </div>
-            </div>
-
-            {/* Pastebin */}
-            <div>
-              <p className="text-xs text-[#666] mb-2 font-semibold uppercase tracking-wider">Pastebin</p>
-              <div className="flex gap-2">
-                <code className="flex-1 bg-[#0d0d14] border border-[#28283a] px-3 py-2 text-xs text-purple-300 font-mono overflow-x-auto">
-                  {loadstringPB}
-                </code>
-                <button
-                  onClick={() => copyText(loadstringPB, 'pb')}
-                  className="px-3 py-2 bg-[#28283a] hover:bg-purple-600 text-xs font-bold transition-all min-w-[70px]"
-                >
-                  {copied === 'pb' ? '✓ Copied' : 'Copy'}
-                </button>
+            <div className="p-4" style={{ background: '#12121a', border: '1px solid #1a1a2e' }}>
+              <h3 className="font-bold text-sm mb-3" style={{ color: '#00d4aa' }}>Executores compatíveis</h3>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {["Solara", "Fluxus", "Delta", "Hydrogen", "KRNL", "Arceus X", "Codex", "Synapse", "Script-Ware", "Wave"].map(e => (
+                  <span key={e} className="px-2 py-1 text-xs" style={{ background: '#00d4aa10', color: '#00d4aa', border: '1px solid #00d4aa22' }}>{e}</span>
+                ))}
               </div>
             </div>
           </div>
-        </section>
+        )}
+      </div>
 
-        {/* Features */}
-        <section className="bg-[#17171b] border border-[#28283a] p-6">
-          <h2 className="text-lg font-bold text-purple-400 mb-4 flex items-center gap-2">
-            <span>⚡</span> Features
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {[
-              { icon: "👁️", name: "ESP", desc: "Highlight + nametag + distance" },
-              { icon: "🎯", name: "Aimbot", desc: "FOV, Smooth, Hit Part, Max Dist" },
-              { icon: "🔇", name: "Silent Aim", desc: "Redirect shots without moving camera" },
-              { icon: "🔫", name: "Trigger Bot", desc: "Auto-fire when crosshair on enemy" },
-              { icon: "✈️", name: "Fly", desc: "WASD + Space/Ctrl, adjustable speed" },
-              { icon: "📦", name: "Hitbox", desc: "Expand enemy hitboxes, adjustable" },
-              { icon: "🚶", name: "Noclip", desc: "Walk through walls" },
-              { icon: "👥", name: "Players", desc: "Spectate, Fling, Teleport to any player" },
-              { icon: "🎮", name: "Custom Keybinds", desc: "Rebind every function in-game" },
-              { icon: "🎨", name: "10 Themes", desc: "Medusa, Emerald, Ocean, Blood, etc." },
-              { icon: "✅", name: "Team Check", desc: "Ignore teammates" },
-              { icon: "👀", name: "Visible Check", desc: "Only aim at visible targets" },
-              { icon: "❤️", name: "Health Check", desc: "Min HP threshold" },
-              { icon: "📷", name: "Spectate", desc: "Watch any player's POV" },
-              { icon: "💥", name: "Fling", desc: "Launch players into orbit" },
-              { icon: "🏃", name: "Teleport", desc: "TP behind any player" },
-            ].map((f, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 bg-[#0d0d14] border border-[#28283a] hover:border-purple-600/50 transition-all">
-                <span className="text-lg">{f.icon}</span>
-                <div>
-                  <p className="text-sm font-bold text-white">{f.name}</p>
-                  <p className="text-xs text-[#666]">{f.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Default Keybinds */}
-        <section className="bg-[#17171b] border border-[#28283a] p-6">
-          <h2 className="text-lg font-bold text-purple-400 mb-4 flex items-center gap-2">
-            <span>⌨️</span> Default Keybinds
-          </h2>
-          <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
-            {[
-              { key: "T", fn: "ESP" },
-              { key: "G", fn: "Aimbot" },
-              { key: "F", fn: "Fly" },
-              { key: "H", fn: "Hitbox" },
-              { key: "U", fn: "Noclip" },
-              { key: "J", fn: "Silent Aim" },
-              { key: "K", fn: "Trigger Bot" },
-              { key: "Y", fn: "Toggle GUI" },
-              { key: "P", fn: "Eject" },
-              { key: "RMB", fn: "Aim Lock" },
-            ].map((k, i) => (
-              <div key={i} className="text-center p-2 bg-[#0d0d14] border border-[#28283a]">
-                <div className="text-purple-400 font-bold text-sm">{k.key}</div>
-                <div className="text-[#666] text-xs mt-1">{k.fn}</div>
-              </div>
-            ))}
-          </div>
-          <p className="text-xs text-[#555] mt-3">
-            Todas as keybinds podem ser reconfiguradas na aba 🎮 Binds dentro do script.
-          </p>
-        </section>
-
-        {/* Executors */}
-        <section className="bg-[#17171b] border border-[#28283a] p-6">
-          <h2 className="text-lg font-bold text-purple-400 mb-4 flex items-center gap-2">
-            <span>🖥️</span> Executores Compatíveis
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {["Solara", "Fluxus", "Delta", "Arceus X", "Hydrogen", "Krnl", "Script-Ware", "Synapse X", "Wave"].map((e, i) => (
-              <span key={i} className="px-3 py-1.5 bg-[#0d0d14] border border-[#28283a] text-xs text-[#888] font-semibold">
-                {e}
-              </span>
-            ))}
-          </div>
-        </section>
-
-        {/* UI Preview */}
-        <section className="bg-[#17171b] border border-[#28283a] p-6">
-          <h2 className="text-lg font-bold text-purple-400 mb-4 flex items-center gap-2">
-            <span>🖼️</span> UI Design Preview
-          </h2>
-          <div className="bg-[#0d0d14] border border-[#28283a] p-4 max-w-sm">
-            {/* Mini preview of the UI */}
-            <div className="border border-[#28283a] bg-[#11111b]">
-              {/* Top bar */}
-              <div className="h-1 bg-purple-600" />
-              <div className="bg-[#0a0a10] px-3 py-2 flex items-center justify-between border-b border-[#28283a]">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs">🐍</span>
-                  <span className="text-xs font-bold text-white">MEDUSA</span>
-                  <span className="text-[8px] text-purple-400 border border-purple-400/50 px-1">v6.0</span>
-                </div>
-                <div className="flex gap-1">
-                  <div className="w-3 h-3 border border-[#28283a] flex items-center justify-center text-[8px] text-[#666]">─</div>
-                  <div className="w-3 h-3 border border-[#28283a] flex items-center justify-center text-[8px] text-[#666]">✕</div>
-                </div>
-              </div>
-              {/* Body with sidebar */}
-              <div className="flex">
-                <div className="w-8 bg-[#0a0a10] border-r border-[#28283a] py-2 space-y-1">
-                  {["📊", "⚙️", "🎯", "👥", "⚡", "🎮", "🎨"].map((icon, i) => (
-                    <div key={i} className={`text-center text-[8px] py-1 ${i === 0 ? 'border-l-2 border-purple-500' : ''}`}>
-                      {icon}
-                    </div>
-                  ))}
-                </div>
-                <div className="flex-1 p-2 space-y-1">
-                  <div className="text-[8px] text-purple-400 font-bold">MODULE STATUS</div>
-                  <div className="grid grid-cols-2 gap-1">
-                    {["ESP ON", "Aim OFF", "Fly OFF", "Noclip OFF"].map((s, i) => (
-                      <div key={i} className="bg-[#0a0a10] border border-[#28283a] px-1 py-0.5 text-[7px] text-[#666]">
-                        <span className={`inline-block w-1 h-1 mr-1 ${i === 0 ? 'bg-green-500' : 'bg-gray-600'}`} />
-                        {s}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="text-[8px] text-purple-400 font-bold mt-2">TARGET LOCK</div>
-                  <div className="bg-[#190f28] border border-[#28283a] p-1">
-                    <div className="text-[8px] text-purple-400 font-bold flex items-center gap-1">
-                      <span className="w-1 h-1 bg-purple-400 inline-block" /> No Target
-                    </div>
-                    <div className="text-[7px] text-[#555]">Hold RMB to lock</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="border-t border-[#28283a] py-6 text-center">
-          <p className="text-sm text-[#555]">
-            🐍 <span className="text-purple-400 font-bold">Medusa v6.0</span> — Made by{' '}
-            <span className="text-purple-400 font-semibold">.donatorexe.</span>
-          </p>
-          <p className="text-xs text-[#444] mt-2">
-            300+ UI improvements • Rectangular flat design • All features functional
-          </p>
-        </footer>
-      </main>
+      {/* Footer */}
+      <div className="text-center py-12 mt-8" style={{ borderTop: '1px solid #1a1a2e' }}>
+        <p className="text-xs" style={{ color: '#333' }}>
+          🐍 MEDUSA v9.0 — Made by .donatorexe.
+        </p>
+      </div>
     </div>
-  )
+  );
 }
-
-export default App
