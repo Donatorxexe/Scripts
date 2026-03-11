@@ -7,10 +7,6 @@
 --  ╚═╝     ╚═╝╚══════╝╚═════╝  ╚═════╝ ╚══════╝╚═╝  ╚═╝
 --  Medusa v6.0 — Premium Script
 --  Made by .donatorexe.
---
---  300+ UI/GUI improvements • Full redesign • All features functional
---  Aimbot + Silent Aim + Trigger Bot + ESP + Fly + Hitbox + Noclip
---  Players list (Spectate/Fling/TP) • Custom Keybinds • 10 Themes
 -- ══════════════════════════════════════════════════════════════════════
 
 if not task or not task.wait then
