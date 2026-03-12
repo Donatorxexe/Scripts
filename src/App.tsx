@@ -48,7 +48,7 @@ const features = [
     'Crosshair — 4 estilos: Cross, Dot, Circle, T-Cross',
     'Crosshair Size e Gap ajustáveis',
     'Target HUD — Nome + HP bar + Distância do alvo lockado',
-    'Watermark — MEDUSA v9.0 | FPS | Ping',
+    'Watermark — MEDUSA v10.0 | FPS | Ping',
     'Kill Feed — Últimas 8 kills com timestamp',
   ]},
   { cat: 'Movement', icon: '⚡', color: '#f59e0b', items: [
@@ -98,6 +98,15 @@ const features = [
     'Panel Opacity 0-100%',
     'Temas: Medusa, Emerald, Ocean, Blood, Amber, Mint, Rose, Sky, Lime, Frost, Gold, Cyber',
   ]},
+  { cat: 'Stream Proof', icon: '🔒', color: '#22d3ee', items: [
+    'Stream Proof — Esconde GUI do OBS/Discord/ShareScreen',
+    '4 métodos de fallback: gethui() → getgenv().gethui → protect_gui+CoreGui → cloneref',
+    'Toggle ON/OFF com F2 ou switch na aba Extras',
+    'Notificações também respeitam Stream Proof',
+    'Watermark e Target HUD movidos junto com o painel',
+    'Se executor não suporta, avisa automaticamente',
+    'Desativa automaticamente com Panic Key',
+  ]},
   { cat: 'Keybinds', icon: '🎮', color: '#8b5cf6', items: [
     '16 keybinds editáveis na UI do jogo',
     'Clica no botão e pressiona a nova tecla',
@@ -124,6 +133,7 @@ const binds: [string, string, string][] = [
   ['RShift', 'TP to Cursor', '📏'],
   ['Y', 'Toggle GUI', '👁️'],
   ['P', 'Eject', '🚫'],
+  ['F2', 'Stream Proof', '🔒'],
   ['End', 'Panic Key', '🚨'],
 ];
 
@@ -180,7 +190,7 @@ export default function App() {
                 <span className="mono" style={{
                   padding: '2px 8px', fontSize: 10, fontWeight: 700,
                   background: `${C.accent}12`, color: C.accent, border: `1px solid ${C.accent}33`,
-                }}>v9.0 FINAL</span>
+                }}>v10.0 FINAL</span>
                 <span style={{ fontSize: 11, color: C.dim }}>Made by</span>
                 <span style={{ fontSize: 11, color: C.accent, fontWeight: 700 }}>.donatorexe.</span>
               </div>
@@ -497,6 +507,7 @@ export default function App() {
                       ['Infinite Jump / No Fall', '✅', '—'],
                       ['Click TP / TP to Cursor', '✅', '—'],
                       ['Server Hop', '✅', '—'],
+                      ['Stream Proof', '⚠️ gethui', '✅'],
                       ['GUI Editor / Keybinds', '✅', '—'],
                     ].map(([feat, basic, hook], i) => (
                       <tr key={i} style={{ borderBottom: `1px solid ${C.border}22`, color: '#888' }}>
@@ -520,7 +531,7 @@ export default function App() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
           <span style={{ fontSize: 14 }}>🐍</span>
-          <span style={{ fontSize: 11, color: '#333', fontWeight: 700 }}>MEDUSA v9.0</span>
+          <span style={{ fontSize: 11, color: '#333', fontWeight: 700 }}>MEDUSA v10.0</span>
           <span style={{ fontSize: 10, color: '#282828' }}>—</span>
           <span style={{ fontSize: 10, color: '#444' }}>Made by .donatorexe.</span>
         </div>
