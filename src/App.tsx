@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import scriptRaw from '../Medusa_v9.txt?raw';
+import scriptRaw from '../Medusa_v11_Xeno.txt?raw';
 
 const C = {
   accent: '#00d4aa',
@@ -16,7 +16,7 @@ function downloadScript() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'Medusa_v9.txt';
+  a.download = 'Medusa_v11_Xeno.txt';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -190,7 +190,7 @@ export default function App() {
                 <span className="mono" style={{
                   padding: '2px 8px', fontSize: 10, fontWeight: 700,
                   background: `${C.accent}12`, color: C.accent, border: `1px solid ${C.accent}33`,
-                }}>v10.0 FINAL</span>
+                }}>v11 XENO EDITION</span>
                 <span style={{ fontSize: 11, color: C.dim }}>Made by</span>
                 <span style={{ fontSize: 11, color: C.accent, fontWeight: 700 }}>.donatorexe.</span>
               </div>
@@ -531,7 +531,7 @@ export default function App() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
           <span style={{ fontSize: 14 }}>🐍</span>
-          <span style={{ fontSize: 11, color: '#333', fontWeight: 700 }}>MEDUSA v10.0</span>
+          <span style={{ fontSize: 11, color: '#333', fontWeight: 700 }}>MEDUSA v11 XENO</span>
           <span style={{ fontSize: 10, color: '#282828' }}>—</span>
           <span style={{ fontSize: 10, color: '#444' }}>Made by .donatorexe.</span>
         </div>
