@@ -2,8 +2,8 @@
 -- ║                    MEDUSA v9.0 — Ultimate Edition                    ║
 -- ║                      Made by .donatorexe.                            ║
 -- ║                                                                      ║
--- ║                                                                      ║
--- ║                                                                      ║
+-- ║  Para usar com loadstring:                                           ║
+-- ║  loadstring(game:HttpGet("URL_DO_RAW"))()                           ║
 -- ╚══════════════════════════════════════════════════════════════════════╝
 
 -- ─── POLYFILL ──────────────────────────────────────────────
@@ -76,6 +76,7 @@ local st = {
     speed = false, infJump = false, fullbright = false,
     antiAfk = true, noFallDmg = false, clickTp = false,
     crosshair = false, watermark = true, rainbow = false,
+    streamProof = false,
     gui = true, running = true,
 }
 
@@ -119,6 +120,7 @@ local keybinds = {
     crosshair = Enum.KeyCode.C,
     noFallDmg = Enum.KeyCode.V,
     clickTp = Enum.KeyCode.B,
+    streamProof = Enum.KeyCode.F2,
     toggleGui = Enum.KeyCode.Y,
     panic = Enum.KeyCode.End,
     eject = Enum.KeyCode.P,
@@ -317,6 +319,56 @@ local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "MedusaGUI"; screenGui.ResetOnSpawn = false
 screenGui.DisplayOrder = 999; screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = playerGui
+
+-- ─── STREAMPROOF ENGINE ───────────────────────────────
+-- Torna a GUI invisível para OBS, Discord, Medal, etc.
+-- Usa gethui() → CoreGui → protect_gui como fallback
+local streamProofContainer = nil
+local originalParent = playerGui
+
+local function getHiddenContainer()
+    -- Método 1: gethui() — container completamente oculto (melhor)
+    if typeof(gethui) == "function" then
+        local ok, container = pcall(gethui)
+        if ok and container then return container end
+    end
+    -- Método 2: CoreGui — não capturado por Game Capture no OBS
+    local ok2, cg = pcall(function() return CoreGui end)
+    if ok2 and cg then
+        -- Alguns executors precisam de protect_gui
+        if typeof(protect_gui) == "function" then
+            pcall(protect_gui, screenGui)
+        elseif syn and typeof(syn.protect_gui) == "function" then
+            pcall(syn.protect_gui, screenGui)
+        end
+        return cg
+    end
+    return nil
+end
+
+local function enableStreamProof()
+    local container = getHiddenContainer()
+    if container then
+        streamProofContainer = container
+        -- Move todas as GUIs do Medusa para o container oculto
+        pcall(function() screenGui.Parent = container end)
+        pcall(function() if wmGui then wmGui.Parent = container end end)
+        pcall(function() if thGui then thGui.Parent = container end end)
+        notify("🔒 Stream Proof ON — GUI oculta para OBS/Discord", C.success)
+    else
+        -- Fallback: usa OnTopOfCoreBlur e overlay masking
+        notify("⚠️ Stream Proof parcial — executor não suporta gethui()", C.warning)
+    end
+end
+
+local function disableStreamProof()
+    -- Volta as GUIs para playerGui normal
+    pcall(function() screenGui.Parent = playerGui end)
+    pcall(function() if wmGui then wmGui.Parent = playerGui end end)
+    pcall(function() if thGui then thGui.Parent = playerGui end end)
+    streamProofContainer = nil
+    notify("🔓 Stream Proof OFF — GUI visível", C.muted)
+end
 
 -- Shadow
 local shadow = Instance.new("Frame", screenGui)
@@ -978,7 +1030,7 @@ end
 -- PAGE 5: EXTRAS
 -- ══════════════════════════════════════════════════════
 local p5 = mkPage(5)
-local extCard1 = mkCard(p5, 190, 1, "EXTRA FEATURES")
+local extCard1 = mkCard(p5, 224, 1, "EXTRA FEATURES")
 local tgCrosshair = mkToggle(extCard1, "Crosshair", st.crosshair, 10, 28, function(v)
     st.crosshair = v
     notify(v and "➕ Crosshair ON" or "❌ Crosshair OFF", v and C.accent or C.error)
@@ -998,7 +1050,12 @@ local tgClickTp = mkToggle(extCard1, "Click TP (hold bind)", st.clickTp, 10, 140
     st.clickTp = v
     notify(v and "🖱️ Click TP ON" or "❌ Click TP OFF", v and C.accent or C.error)
 end)
-local tgRainbow = mkToggle(extCard1, "Rainbow Mode", st.rainbow, 10, 168, function(v)
+local tgStreamProof = mkToggle(extCard1, "Stream Proof (F2)", st.streamProof, 10, 168, function(v)
+    st.streamProof = v
+    if v then enableStreamProof() else disableStreamProof() end
+end)
+
+local tgRainbow = mkToggle(extCard1, "Rainbow Mode", st.rainbow, 10, 196, function(v)
     st.rainbow = v
     notify(v and "🌈 Rainbow ON" or "❌ Rainbow OFF", v and C.accent or C.error)
 end)
@@ -1019,7 +1076,7 @@ end)
 -- PAGE 6: ACTIONS
 -- ══════════════════════════════════════════════════════
 local p6 = mkPage(6)
-local actCard = mkCard(p6, 320, 1, "TOGGLES")
+local actCard = mkCard(p6, 348, 1, "TOGGLES")
 
 local actionToggles = {}
 local actionList = {
@@ -1033,6 +1090,7 @@ local actionList = {
     {"Speed Hack", "speed", C.warning},
     {"Infinite Jump", "infJump", C.fly},
     {"Fullbright", "fullbright", C.accent},
+    {"Stream Proof", "streamProof", C.success},
 }
 
 for i, data in ipairs(actionList) do
@@ -1056,6 +1114,8 @@ for i, data in ipairs(actionList) do
             if not v then resetAllHitboxes() end
         elseif data[2] == "noclip" then
             setNoclip(v)
+        elseif data[2] == "streamProof" then
+            if v then enableStreamProof() else disableStreamProof() end
         end
         notify((v and "✅ " or "❌ ") .. data[1] .. (v and " ON" or " OFF"), v and data[3] or C.error)
     end)
@@ -1092,11 +1152,11 @@ end)
 -- PAGE 7: BINDS
 -- ══════════════════════════════════════════════════════
 local p7 = mkPage(7)
-local bindCard = mkCard(p7, 500, 1, "KEYBINDS — Click to rebind")
+local bindCard = mkCard(p7, 530, 1, "KEYBINDS — Click to rebind")
 
 local bindButtons = {}
-local bindOrder = {"esp","aimbot","silentAim","triggerBot","fly","hitbox","noclip","speed","infJump","fullbright","crosshair","noFallDmg","clickTp","toggleGui","panic","eject"}
-local bindLabels = {"ESP","Aimbot","Silent Aim","Trigger Bot","Fly","Hitbox","Noclip","Speed","Inf. Jump","Fullbright","Crosshair","No Fall DMG","Click TP","Toggle GUI","Panic","Eject"}
+local bindOrder = {"esp","aimbot","silentAim","triggerBot","fly","hitbox","noclip","speed","infJump","fullbright","crosshair","noFallDmg","clickTp","streamProof","toggleGui","panic","eject"}
+local bindLabels = {"ESP","Aimbot","Silent Aim","Trigger Bot","Fly","Hitbox","Noclip","Speed","Inf. Jump","Fullbright","Crosshair","No Fall DMG","Click TP","Stream Proof","Toggle GUI","Panic","Eject"}
 
 local waitingBind = nil
 
@@ -1915,6 +1975,9 @@ UIS.InputBegan:Connect(function(i, gp)
         end, off = function() disableFullbright() end},
         {bind = "crosshair", state = "crosshair", name = "Crosshair", color = C.accent},
         {bind = "noFallDmg", state = "noFallDmg", name = "No Fall DMG", color = C.success},
+        {bind = "streamProof", state = "streamProof", name = "Stream Proof", color = C.success, on = function()
+            enableStreamProof()
+        end, off = function() disableStreamProof() end},
     }
 
     for _, tm in ipairs(toggleMap) do
