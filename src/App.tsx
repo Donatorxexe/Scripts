@@ -1,160 +1,95 @@
-import { useState, useEffect, useCallback, useRef, CSSProperties } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import scriptRaw from '../Medusa_v9.txt?raw';
 
-// ═══════════════════════════════════════════════════════════
-//  MEDUSA SCRIPT CONTENT (embedded for download)
-// ═══════════════════════════════════════════════════════════
-const SCRIPT_URL_GH = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/USER/REPO/main/Medusa.lua"))()';
-const SCRIPT_URL_PB = 'loadstring(game:HttpGet("https://pastebin.com/raw/XXXXXXXX"))()';
+/* ════════════════════════════════════════════════════════════
+   MEDUSA v9.0 — Web Viewer & Downloader
+   Made by .donatorexe.
+   ════════════════════════════════════════════════════════════ */
 
-function downloadScript() {
-  const scriptContent = `-- Para obter o script completo do MEDUSA v9.0:
--- 1. Visita o repositorio GitHub do projeto
--- 2. Ou usa o loadstring abaixo no teu executor:
---
--- loadstring(game:HttpGet("https://raw.githubusercontent.com/USER/REPO/main/Medusa.lua"))()
---
--- O script completo tem ~1500 linhas com:
--- Aimbot, Silent Aim, Trigger Bot, ESP, Fly, Speed,
--- Noclip, Hitbox, Crosshair, Player List, 12 temas,
--- 16 keybinds editaveis, e muito mais.
---
--- Made by .donatorexe.
--- MEDUSA v9.0 — Ultimate Edition
-`;
-  const blob = new Blob([scriptContent], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'Medusa_v9.txt';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-const ACCENT = '#00d4aa';
-const ACCENT_DIM = '#00d4aa22';
-const ACCENT_MED = '#00d4aa44';
+const A = '#00d4aa';
 const BG = '#08080e';
-const BG_CARD = '#0f0f18';
-const BG_DARK = '#0a0a12';
-const BORDER = '#1a1a28';
+const CARD = '#0e0e18';
+const BORDER = '#1a1a2a';
 const TEXT = '#e4e4eb';
-const MUTED = '#666680';
+const DIM = '#71718a';
 
-// ═══════════════════════════════════════════════════════════
-//  DATA
-// ═══════════════════════════════════════════════════════════
+const LOADSTRING_GH = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/USER/REPO/main/Medusa.lua"))()';
+const LOADSTRING_PB = 'loadstring(game:HttpGet("https://pastebin.com/raw/XXXXXXXX"))()';
+
+/* ─── Feature Data ───────────────────────────────────────── */
 const features = [
   {
-    cat: '🎯 Aimbot',
-    color: '#a855f7',
-    items: [
-      'Aimbot Normal — Smooth 0 (snap) a 100 (legit), RMB para lock',
-      'Silent Aim — hookmetamethod redireciona mouse.Hit/Target sem mover câmara',
-      'Trigger Bot — Auto-fire quando mira está dentro do Trigger FOV',
-      'Team Check — Ignora jogadores da mesma equipa',
-      'Visible Check — Raycast verifica se alvo está visível',
-      'Health Check — Só mira em alvos com HP > mínimo definido',
-      'Hit Part — Head / Torso / Closest (parte mais perto do cursor)',
-      'Max Distance — Slider 50-2000 studs',
-      'FOV Circle — Círculo visual no ecrã centrado no cursor',
-      'Aim Smooth — Interpolação lerp para movimento natural',
-    ],
+    cat: '🎯 Aimbot', col: '#a855f7', items: [
+      'Aimbot Normal — Smooth 0-100, RMB lock, FOV circle',
+      'Silent Aim — hookmetamethod redireciona mouse.Hit/Target',
+      'Trigger Bot — Auto-fire + delay configurável',
+      'Team Check, Visible Check, Health Check',
+      'Hit Part: Head / Torso / Closest',
+      'Max Distance slider 50-2000 studs',
+    ]
   },
   {
-    cat: '👁️ Visuals',
-    color: '#3b82f6',
-    items: [
-      'ESP Highlights com cor accent',
-      'ESP Nomes (BillboardGui acima da cabeça)',
-      'ESP Distância em metros (atualiza em tempo real)',
-      'ESP HP Bars coloridas (verde/amarelo/vermelho)',
-      'ESP Distance Filter — Slider 50-5000 studs',
-      'ESP Auto-Refresh configurável (timer visual)',
+    cat: '👁️ Visuals', col: '#3b82f6', items: [
+      'ESP Highlights + Nomes + Distância + HP Bars',
+      'ESP Distance Filter 50-5000 studs',
+      'ESP Auto-Refresh com timer visual',
       'Crosshair — 4 estilos: Cross, Dot, Circle, T-Cross',
-      'Crosshair Size, Gap e Thickness ajustáveis',
-      'Target HUD — Barra flutuante com nome + HP + distância',
-      'Watermark — MEDUSA v9.0 | FPS | Ping (canto superior)',
-      'Kill Feed — Log das últimas 8 kills com timestamp',
-    ],
+      'Target HUD — Nome + HP + Distância do alvo lockado',
+      'Watermark — MEDUSA v9.0 | FPS | Ping',
+      'Kill Feed — Últimas 8 kills com timestamp',
+    ]
   },
   {
-    cat: '⚡ Movement',
-    color: '#f59e0b',
-    items: [
-      'Fly — WASD + Space/Ctrl, velocidade 50-300',
-      'Noclip — Atravessa paredes (CanCollide = false)',
-      'Speed Hack — Slider 16-200 WalkSpeed',
-      'Infinite Jump — Pula ilimitadamente no ar',
-      'TP to Cursor — Teleporta ao mouse.Hit (RShift)',
-      'Click TP — Segura bind + clica para teleportar',
+    cat: '⚡ Movement', col: '#f59e0b', items: [
+      'Fly — WASD + Space/Ctrl, speed 50-300',
+      'Noclip — Atravessa paredes',
+      'Speed Hack — WalkSpeed 16-200',
+      'Infinite Jump — Pula no ar ilimitadamente',
+      'Click TP — Segura B + clica para teleportar',
+      'TP to Cursor — RShift teleporta ao mouse',
       'No Fall Damage — Cancela dano de queda',
-      'Auto Re-Apply — Fly/Speed/Noclip re-aplicam no respawn',
-    ],
+    ]
   },
   {
-    cat: '🔧 Combat',
-    color: '#ef4444',
-    items: [
-      'Hitbox Expander — Slider 1x a 25x tamanho das partes',
-      'Hitbox Transparency — 0% a 100% transparência',
-      'Hitbox auto-reset quando desativado',
-      'Trigger FOV — Slider 5-100px (raio de ativação)',
-      'Trigger Delay — Slider 0.01s a 1s entre disparos',
-    ],
+    cat: '🔧 Combat', col: '#ef4444', items: [
+      'Hitbox Expander — 1x a 25x',
+      'Hitbox Transparency ajustável',
+      'Trigger FOV 5-100px',
+      'Trigger Delay 0.01s-1s',
+    ]
   },
   {
-    cat: '🌍 World',
-    color: '#22c55e',
-    items: [
-      'Fullbright — Remove fog, shadows, brightness=2',
-      'Fullbright guarda e restaura lighting original no eject',
-      'Anti-AFK — VirtualUser impede kick por idle',
-      'Server Hop — Busca servidor via API e teleporta',
-    ],
+    cat: '🌍 World', col: '#22c55e', items: [
+      'Fullbright — Remove fog e shadows',
+      'Anti-AFK — VirtualUser impede kick',
+      'Server Hop — Busca servidor via API',
+    ]
   },
   {
-    cat: '👥 Players',
-    color: '#06b6d4',
-    items: [
-      'Lista de jogadores com DisplayName e @Username',
-      'HP Bars coloridas por jogador (verde/amarelo/vermelho)',
-      'Spectate — Vê pela câmara de outro jogador',
-      'Unspectate — Volta à tua câmara',
-      'Fling — Velocity-based, teleporta e aplica força',
-      'Teleport To — Teleporta 3 studs atrás do alvo',
-      'Auto-refresh da lista a cada 3 segundos',
-      'Auto-cleanup quando jogador sai durante spectate',
-    ],
+    cat: '👥 Players', col: '#06b6d4', items: [
+      'Lista com DisplayName, @Username, HP bar',
+      'Spectate / Unspectate',
+      'Fling — Velocity-based',
+      'Teleport To — 3 studs atrás do alvo',
+      'Auto-refresh cada 3s',
+    ]
   },
   {
-    cat: '🎨 GUI Customize',
-    color: '#ec4899',
-    items: [
-      '12 Temas — Medusa, Emerald, Ocean, Blood, Amber, Mint, Rose, Sky, Lime, Frost, Gold, Cyber',
-      'Rainbow Mode — Accent color cicla automaticamente em HSV',
-      'Panel Width e Height editáveis em tempo real',
-      'Sidebar Width, Topbar Height editáveis',
-      'Font Size e Title Size editáveis',
-      'Card Spacing e Padding editáveis',
-      'Border Thickness editável',
-      'Toggle Size, Slider Height, Button Height editáveis',
-      'Panel Opacity — Transparência do fundo 0-100%',
-    ],
+    cat: '🎨 GUI Customize', col: '#ec4899', items: [
+      '12 Temas de cor + Rainbow Mode',
+      'Panel Width/Height editáveis',
+      'Sidebar, Topbar, Font Size editáveis',
+      'Card Spacing, Border Thickness editáveis',
+      'Panel Opacity 0-100%',
+    ]
   },
   {
-    cat: '🎮 Keybinds & Safety',
-    color: '#8b5cf6',
-    items: [
-      '16 Keybinds editáveis — clica e pressiona nova tecla',
-      'Reset All to Default — repõe todas as binds',
-      'Panic Key (End) — Desativa TUDO de uma vez',
-      'Eject limpo — Restaura lighting, camera, walkspeed, CanCollide',
-      'Auto-cleanup de BodyVelocity/BodyGyro no eject',
-      'GUI toggle (Y) — Esconde/mostra sem desativar funções',
-      'Minimizar janela (botão — no topbar)',
-    ],
+    cat: '🎮 Keybinds', col: '#8b5cf6', items: [
+      '16 keybinds editáveis na UI',
+      'Reset All to Default',
+      'Panic Key (End) — desativa tudo',
+      'Eject limpo com cleanup total',
+    ]
   },
 ];
 
@@ -178,605 +113,457 @@ const binds: [string, string, string][] = [
 ];
 
 const executors = [
-  { name: 'Solara', status: 'full' },
-  { name: 'Fluxus', status: 'full' },
-  { name: 'Delta', status: 'full' },
-  { name: 'Hydrogen', status: 'full' },
-  { name: 'KRNL', status: 'full' },
-  { name: 'Arceus X', status: 'full' },
-  { name: 'Codex', status: 'full' },
-  { name: 'Synapse', status: 'full' },
-  { name: 'Script-Ware', status: 'full' },
-  { name: 'Wave', status: 'full' },
+  'Solara', 'Fluxus', 'Delta', 'Hydrogen', 'KRNL',
+  'Arceus X', 'Codex', 'Synapse', 'Script-Ware', 'Wave',
 ];
 
-const tabs = [
-  { id: 'features', label: 'Features', icon: '⚡' },
-  { id: 'binds', label: 'Keybinds', icon: '🎮' },
-  { id: 'howto', label: 'Como Usar', icon: '📖' },
-  { id: 'compat', label: 'Compatibilidade', icon: '✅' },
-] as const;
-
-type TabId = (typeof tabs)[number]['id'];
-
-// ═══════════════════════════════════════════════════════════
-//  STYLES
-// ═══════════════════════════════════════════════════════════
-const styles = {
-  page: {
-    minHeight: '100vh',
-    background: BG,
-    color: TEXT,
-  } as CSSProperties,
-
-  container: {
-    maxWidth: '960px',
-    margin: '0 auto',
-    padding: '0 20px',
-  } as CSSProperties,
-
-  hero: {
-    position: 'relative' as const,
-    overflow: 'hidden',
-    borderBottom: `1px solid ${BORDER}`,
-    padding: '56px 0 44px',
-  } as CSSProperties,
-
-  heroGlow: {
-    position: 'absolute' as const,
-    inset: 0,
-    opacity: 0.12,
-    background: `radial-gradient(ellipse at 50% -30%, ${ACCENT}44 0%, transparent 65%)`,
-    pointerEvents: 'none' as const,
-  } as CSSProperties,
-
-  heroGrid: {
-    position: 'absolute' as const,
-    inset: 0,
-    opacity: 0.025,
-    backgroundImage: `linear-gradient(${MUTED}33 1px, transparent 1px), linear-gradient(90deg, ${MUTED}33 1px, transparent 1px)`,
-    backgroundSize: '36px 36px',
-    pointerEvents: 'none' as const,
-  } as CSSProperties,
-
-  card: {
-    background: BG_CARD,
-    border: `1px solid ${BORDER}`,
-    padding: '20px',
-    transition: 'border-color 0.2s, background 0.2s',
-  } as CSSProperties,
-
-  cardHover: {
-    borderColor: ACCENT_MED,
-    background: '#111120',
-  } as CSSProperties,
-
-  btn: {
-    padding: '12px 24px',
-    fontWeight: 700,
-    fontSize: '13px',
-    cursor: 'pointer',
-    border: 'none',
-    transition: 'all 0.2s',
-    fontFamily: 'inherit',
-  } as CSSProperties,
-
-  tag: {
-    display: 'inline-block',
-    padding: '3px 10px',
-    fontSize: '11px',
-    fontFamily: 'Consolas, monospace',
-    fontWeight: 700,
-    background: `${ACCENT}12`,
-    color: ACCENT,
-    border: `1px solid ${ACCENT}33`,
-  } as CSSProperties,
-
-  codeBlock: {
-    padding: '14px',
-    background: BG_DARK,
-    border: `1px solid ${BORDER}`,
-    position: 'relative' as const,
-    fontFamily: 'Consolas, monospace',
-    fontSize: '12px',
-    color: ACCENT,
-    wordBreak: 'break-all' as const,
-    lineHeight: 1.6,
-  } as CSSProperties,
-};
-
-// ═══════════════════════════════════════════════════════════
-//  COMPONENTS
-// ═══════════════════════════════════════════════════════════
-
-function FeatureCard({ cat, color, items, delay }: {
-  cat: string; color: string; items: string[]; delay: number;
-}) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <div
-      className="anim-fade"
-      style={{
-        ...styles.card,
-        ...(hovered ? { borderColor: `${color}55`, background: '#111120' } : {}),
-        animationDelay: `${delay}ms`,
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-        <div style={{ width: '3px', height: '18px', background: color, flexShrink: 0 }} />
-        <h3 style={{ color, fontSize: '14px', fontWeight: 700, flex: 1 }}>{cat}</h3>
-        <span style={{
-          fontSize: '10px', color: MUTED, padding: '2px 8px',
-          border: `1px solid ${color}33`, background: `${color}08`,
-        }}>
-          {items.length}
-        </span>
-      </div>
-      <ul style={{ display: 'flex', flexDirection: 'column', gap: '5px', listStyle: 'none', padding: 0, margin: 0 }}>
-        {items.map((item, i) => (
-          <li key={i} style={{
-            display: 'flex', alignItems: 'flex-start', gap: '8px',
-            fontSize: '12px', color: '#999', lineHeight: 1.5,
-          }}>
-            <span style={{ color, flexShrink: 0, marginTop: '1px', fontSize: '10px' }}>▸</span>
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+/* ─── Copy Helper ────────────────────────────────────────── */
+function useCopy() {
+  const [copied, setCopied] = useState<string | null>(null);
+  const copy = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(id);
+    setTimeout(() => setCopied(null), 2500);
+  };
+  return { copied, copy };
 }
 
-function CopyButton({ text, label }: { text: string; label: string }) {
-  const [copied, setCopied] = useState(false);
-  const copy = useCallback(() => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }, [text]);
-
-  return (
-    <button
-      onClick={copy}
-      style={{
-        padding: '4px 12px', fontSize: '10px', cursor: 'pointer',
-        background: copied ? '#00d4aa22' : '#ffffff08',
-        color: copied ? ACCENT : MUTED,
-        border: `1px solid ${copied ? ACCENT : BORDER}`,
-        transition: 'all 0.2s', fontFamily: 'inherit', fontWeight: 600,
-      }}
-    >
-      {copied ? '✅ Copiado!' : label}
-    </button>
-  );
+/* ─── Download Helper ────────────────────────────────────── */
+function downloadScript() {
+  const blob = new Blob([scriptRaw], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'Medusa_v9.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
-function StatBox({ value, label }: { value: string; label: string }) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <div
-      style={{
-        padding: '10px 16px', border: `1px solid ${hovered ? ACCENT_MED : BORDER}`,
-        background: hovered ? '#111120' : BG_CARD,
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
-        transition: 'all 0.2s', cursor: 'default', minWidth: '72px',
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <span style={{ fontSize: '20px', fontWeight: 800, color: ACCENT }}>{value}</span>
-      <span style={{ fontSize: '9px', color: MUTED, textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</span>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════
-//  MAIN APP
-// ═══════════════════════════════════════════════════════════
+/* ═════════════════════════════════════════════════════════════
+   MAIN APP
+   ═════════════════════════════════════════════════════════════ */
 export default function App() {
-  const [activeTab, setActiveTab] = useState<TabId>('features');
-  const [heroVisible, setHeroVisible] = useState(false);
-  const totalFeatures = useRef(features.reduce((a, f) => a + f.items.length, 0));
+  const [tab, setTab] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  const { copied, copy } = useCopy();
+  const totalFeatures = useRef(features.reduce((s, f) => s + f.items.length, 0));
 
   useEffect(() => {
-    const t = setTimeout(() => setHeroVisible(true), 100);
+    const t = setTimeout(() => setLoaded(true), 80);
     return () => clearTimeout(t);
   }, []);
 
+  const tabs = ['⚡ Features', '🎮 Keybinds', '📖 Como Usar', '✅ Compatibilidade'];
+
   return (
-    <div style={styles.page}>
-      {/* ══════ HERO ══════ */}
-      <section style={styles.hero}>
-        <div style={styles.heroGlow} />
-        <div style={styles.heroGrid} />
+    <div style={{
+      minHeight: '100vh',
+      background: BG,
+      color: TEXT,
+      display: 'flex',
+      flexDirection: 'column',
+    }}>
+
+      {/* ═══════ HERO ═══════ */}
+      <header style={{
+        borderBottom: `1px solid ${BORDER}`,
+        padding: '48px 0 40px',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* Glow bg */}
+        <div style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none',
+          background: `radial-gradient(ellipse at 50% -20%, ${A}20 0%, transparent 60%)`,
+        }} />
 
         <div style={{
-          ...styles.container, position: 'relative',
-          opacity: heroVisible ? 1 : 0,
-          transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
+          maxWidth: 900, margin: '0 auto', padding: '0 24px',
+          position: 'relative',
+          opacity: loaded ? 1 : 0,
+          transform: loaded ? 'none' : 'translateY(16px)',
           transition: 'all 0.6s ease-out',
         }}>
-          {/* Title Row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
-            <div
-              className="anim-glow"
-              style={{
-                width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '34px', border: `2px solid ${ACCENT_MED}`, background: ACCENT_DIM,
-              }}
-            >
-              🐍
-            </div>
+          {/* Logo + Title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14 }}>
+            <div className="glow-box" style={{
+              width: 56, height: 56,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 30, border: `2px solid ${A}44`, background: `${A}11`,
+            }}>🐍</div>
             <div>
-              <h1 style={{ fontSize: '40px', fontWeight: 900, letterSpacing: '-2px', color: ACCENT, lineHeight: 1 }}>
+              <h1 style={{ fontSize: 38, fontWeight: 900, color: A, letterSpacing: -2, lineHeight: 1 }}>
                 MEDUSA
               </h1>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px', flexWrap: 'wrap' }}>
-                <span style={styles.tag}>v9.0 FINAL</span>
-                <span style={{ fontSize: '12px', color: MUTED }}>Made by</span>
-                <span style={{ fontSize: '12px', color: ACCENT, fontWeight: 700 }}>.donatorexe.</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+                <span style={{
+                  padding: '2px 10px', fontSize: 11, fontWeight: 700,
+                  background: `${A}15`, color: A, border: `1px solid ${A}33`,
+                  fontFamily: 'Consolas, monospace',
+                }}>v9.0 FINAL</span>
+                <span style={{ fontSize: 12, color: DIM }}>Made by</span>
+                <span style={{ fontSize: 12, color: A, fontWeight: 700 }}>.donatorexe.</span>
               </div>
             </div>
           </div>
 
-          {/* Description */}
-          <p style={{ fontSize: '14px', color: '#888', lineHeight: 1.7, maxWidth: '600px', marginTop: '12px' }}>
+          <p style={{ fontSize: 14, color: '#888', lineHeight: 1.7, maxWidth: 580, margin: '12px 0 20px' }}>
             Script Roblox completo — Aimbot, Silent Aim, Trigger Bot, ESP, Fly, Speed,
-            Player List, 12 temas, 16 keybinds configuráveis, GUI retangular ultra-personalizável.
-            Tudo auditado e 100% funcional.
+            Player List, 12 temas, 16 keybinds, GUI ultra-personalizável. Tudo auditado e funcional.
           </p>
 
           {/* Stats */}
-          <div style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' }}>
-            <StatBox value={totalFeatures.current.toString()} label="Features" />
-            <StatBox value="16" label="Keybinds" />
-            <StatBox value="12" label="Temas" />
-            <StatBox value="8" label="Abas" />
-            <StatBox value="~1500" label="Linhas" />
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
+            {[
+              [totalFeatures.current, 'Features'],
+              [16, 'Keybinds'],
+              [12, 'Temas'],
+              [8, 'Abas'],
+              ['~2K', 'Linhas'],
+            ].map(([v, l]) => (
+              <div key={String(l)} style={{
+                padding: '8px 16px', background: CARD, border: `1px solid ${BORDER}`,
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                minWidth: 68,
+              }}>
+                <span style={{ fontSize: 18, fontWeight: 800, color: A }}>{String(v)}</span>
+                <span style={{ fontSize: 9, color: DIM, textTransform: 'uppercase', letterSpacing: 1 }}>{String(l)}</span>
+              </div>
+            ))}
           </div>
 
-          {/* Buttons */}
-          <div style={{ display: 'flex', gap: '10px', marginTop: '24px', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(SCRIPT_URL_GH);
-              }}
-              style={{
-                ...styles.btn,
-                background: ACCENT, color: '#000',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = `0 8px 24px ${ACCENT_MED}`;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              📋 Copiar Loadstring
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button onClick={() => copy(LOADSTRING_GH, 'ls')} style={{
+              padding: '11px 22px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              background: A, color: '#000', border: 'none', fontFamily: 'inherit',
+              transition: 'opacity 0.2s',
+            }}>
+              {copied === 'ls' ? '✅ Copiado!' : '📋 Copiar Loadstring'}
             </button>
-            <button
-              onClick={downloadScript}
-              style={{
-                ...styles.btn,
-                background: '#22c55e', color: '#000',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 8px 24px #22c55e44';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              ⬇️ Download Script (.txt)
+            <button onClick={downloadScript} style={{
+              padding: '11px 22px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              background: '#22c55e', color: '#000', border: 'none', fontFamily: 'inherit',
+              transition: 'opacity 0.2s',
+            }}>
+              ⬇️ Download .txt
             </button>
-            <button
-              onClick={() => setActiveTab('howto')}
-              style={{
-                ...styles.btn,
-                background: 'transparent', color: ACCENT,
-                border: `1px solid ${ACCENT_MED}`,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = ACCENT_DIM;
-                e.currentTarget.style.borderColor = ACCENT;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.borderColor = ACCENT_MED;
-              }}
-            >
+            <button onClick={() => setTab(2)} style={{
+              padding: '11px 22px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              background: 'transparent', color: A, border: `1px solid ${A}44`,
+              fontFamily: 'inherit', transition: 'all 0.2s',
+            }}>
               📖 Como Usar
             </button>
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* ══════ TABS ══════ */}
-      <div style={styles.container}>
+      {/* ═══════ CONTENT ═══════ */}
+      <main style={{
+        flex: 1,
+        maxWidth: 900, width: '100%',
+        margin: '0 auto',
+        padding: '0 24px',
+      }}>
+        {/* Tabs */}
         <div style={{
-          display: 'flex', gap: 0, marginTop: '28px',
-          borderBottom: `1px solid ${BORDER}`, overflowX: 'auto',
+          display: 'flex', gap: 0, marginTop: 24,
+          borderBottom: `1px solid ${BORDER}`,
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
         }}>
-          {tabs.map((tab) => {
-            const active = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  padding: '12px 18px', fontSize: '13px', fontWeight: 600,
-                  cursor: 'pointer', background: active ? `${ACCENT}08` : 'transparent',
-                  color: active ? ACCENT : MUTED, border: 'none',
-                  borderBottom: `2px solid ${active ? ACCENT : 'transparent'}`,
-                  transition: 'all 0.2s', whiteSpace: 'nowrap', fontFamily: 'inherit',
-                }}
-                onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = '#999'; }}
-                onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = MUTED; }}
-              >
-                {tab.icon} {tab.label}
-              </button>
-            );
-          })}
+          {tabs.map((t, i) => (
+            <button key={t} onClick={() => setTab(i)} style={{
+              padding: '12px 18px', fontSize: 13, fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'inherit',
+              background: tab === i ? `${A}0a` : 'transparent',
+              color: tab === i ? A : DIM,
+              border: 'none',
+              borderBottom: `2px solid ${tab === i ? A : 'transparent'}`,
+              whiteSpace: 'nowrap',
+              transition: 'all 0.15s',
+            }}>{t}</button>
+          ))}
         </div>
 
-        {/* ══════ FEATURES TAB ══════ */}
-        {activeTab === 'features' && (
+        {/* ─── TAB 0: Features ─── */}
+        {tab === 0 && (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 380px), 1fr))',
-            gap: '12px', padding: '24px 0 48px',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: 12, padding: '20px 0 48px',
           }}>
             {features.map((f, i) => (
-              <FeatureCard key={f.cat} cat={f.cat} color={f.color} items={f.items} delay={i * 50} />
+              <FeatureCard key={f.cat} cat={f.cat} col={f.col} items={f.items} delay={i * 60} />
             ))}
           </div>
         )}
 
-        {/* ══════ BINDS TAB ══════ */}
-        {activeTab === 'binds' && (
-          <div style={{ padding: '24px 0 48px' }}>
-            <p className="anim-fade" style={{ fontSize: '13px', color: MUTED, marginBottom: '6px' }}>
-              Todas as keybinds são editáveis dentro do script na aba <span style={{ color: ACCENT, fontWeight: 600 }}>"Binds"</span>.
+        {/* ─── TAB 1: Keybinds ─── */}
+        {tab === 1 && (
+          <div style={{ padding: '20px 0 48px' }}>
+            <p style={{ fontSize: 13, color: DIM, marginBottom: 4 }}>
+              Todas editáveis no jogo na aba <span style={{ color: A, fontWeight: 600 }}>Binds</span>.
+              Clica no botão e pressiona a nova tecla.
             </p>
-            <p className="anim-fade" style={{
-              fontSize: '12px', color: '#555', marginBottom: '20px',
-              animationDelay: '50ms',
-            }}>
-              Clica no botão da keybind dentro do jogo e pressiona a nova tecla. RMB (botão direito do rato) serve para ativar o aim lock.
+            <p style={{ fontSize: 12, color: '#555', marginBottom: 18 }}>
+              RMB (botão direito) ativa o aim lock quando o Aimbot está ligado.
             </p>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))',
-              gap: '4px',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+              gap: 4,
             }}>
               {binds.map(([key, action, icon], i) => (
-                <BindRow key={action} keyName={key} action={action} icon={icon} delay={i * 25} />
+                <div key={action} className="fade-up" style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '10px 14px',
+                  background: CARD, border: `1px solid ${BORDER}`,
+                  animationDelay: `${i * 30}ms`,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 14, width: 20, textAlign: 'center' }}>{icon}</span>
+                    <span style={{ fontSize: 12, color: '#aaa' }}>{action}</span>
+                  </div>
+                  <span style={{
+                    padding: '2px 10px', fontSize: 11, fontWeight: 700,
+                    background: `${A}12`, color: A, border: `1px solid ${A}33`,
+                    fontFamily: 'Consolas, monospace',
+                  }}>{key}</span>
+                </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* ══════ HOW-TO TAB ══════ */}
-        {activeTab === 'howto' && (
-          <div style={{ padding: '24px 0 48px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <HowToCard
-              title="Opção 1: Loadstring via GitHub (recomendado)"
-              delay={0}
-              steps={[
-                'Cria um repositório no GitHub',
-                <>Faz upload do script como <code style={{ color: ACCENT }}>Medusa.lua</code></>,
-                'Abre o ficheiro e clica em "Raw" para obter o URL direto',
-                'Cola este código no executor:',
-              ]}
-              code={SCRIPT_URL_GH}
-            />
-            <HowToCard
-              title="Opção 2: Loadstring via Pastebin"
-              delay={80}
-              steps={[
-                <>Vai a <span style={{ color: ACCENT }}>pastebin.com</span> e cria um novo paste</>,
-                'Cola todo o conteúdo do script',
-                'Copia o ID do paste (ex: AbCdEfGh)',
-                'Cola no executor:',
-              ]}
-              code={SCRIPT_URL_PB}
-            />
-            <div
-              className="anim-fade"
-              style={{ ...styles.card, animationDelay: '160ms' }}
-            >
-              <h3 style={{ color: ACCENT, fontSize: '14px', fontWeight: 700, marginBottom: '10px' }}>
+        {/* ─── TAB 2: How To ─── */}
+        {tab === 2 && (
+          <div style={{ padding: '20px 0 48px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {/* Option 1 */}
+            <div className="fade-up" style={{ background: CARD, border: `1px solid ${BORDER}`, padding: 20 }}>
+              <h3 style={{ color: A, fontSize: 14, fontWeight: 700, marginBottom: 12 }}>
+                Opção 1: Loadstring via GitHub (recomendado)
+              </h3>
+              <ol style={{ fontSize: 12, color: '#999', lineHeight: 2, paddingLeft: 18, margin: 0 }}>
+                <li>Cria um repositório no GitHub</li>
+                <li>Faz upload do script como <code style={{ color: A }}>Medusa.lua</code></li>
+                <li>Abre o ficheiro e clica em "Raw" para obter o URL</li>
+                <li>Cola no executor:</li>
+              </ol>
+              <div style={{
+                marginTop: 10, padding: 12, background: '#0a0a12',
+                border: `1px solid ${BORDER}`, position: 'relative',
+                fontFamily: 'Consolas, monospace', fontSize: 12, color: A,
+                wordBreak: 'break-all', lineHeight: 1.6,
+              }}>
+                <code>{LOADSTRING_GH}</code>
+                <button onClick={() => copy(LOADSTRING_GH, 'gh')} style={{
+                  position: 'absolute', top: 8, right: 8,
+                  padding: '3px 10px', fontSize: 10, cursor: 'pointer',
+                  background: copied === 'gh' ? `${A}22` : '#ffffff08',
+                  color: copied === 'gh' ? A : DIM,
+                  border: `1px solid ${copied === 'gh' ? A : BORDER}`,
+                  fontFamily: 'inherit', fontWeight: 600,
+                }}>{copied === 'gh' ? '✅' : 'Copiar'}</button>
+              </div>
+            </div>
+
+            {/* Option 2 */}
+            <div className="fade-up" style={{
+              background: CARD, border: `1px solid ${BORDER}`, padding: 20,
+              animationDelay: '80ms',
+            }}>
+              <h3 style={{ color: A, fontSize: 14, fontWeight: 700, marginBottom: 12 }}>
+                Opção 2: Loadstring via Pastebin
+              </h3>
+              <ol style={{ fontSize: 12, color: '#999', lineHeight: 2, paddingLeft: 18, margin: 0 }}>
+                <li>Vai a <span style={{ color: A }}>pastebin.com</span> e cria um novo paste</li>
+                <li>Cola o conteúdo completo do script</li>
+                <li>Copia o ID do paste (ex: AbCdEfGh)</li>
+                <li>Cola no executor:</li>
+              </ol>
+              <div style={{
+                marginTop: 10, padding: 12, background: '#0a0a12',
+                border: `1px solid ${BORDER}`, position: 'relative',
+                fontFamily: 'Consolas, monospace', fontSize: 12, color: A,
+                wordBreak: 'break-all', lineHeight: 1.6,
+              }}>
+                <code>{LOADSTRING_PB}</code>
+                <button onClick={() => copy(LOADSTRING_PB, 'pb')} style={{
+                  position: 'absolute', top: 8, right: 8,
+                  padding: '3px 10px', fontSize: 10, cursor: 'pointer',
+                  background: copied === 'pb' ? `${A}22` : '#ffffff08',
+                  color: copied === 'pb' ? A : DIM,
+                  border: `1px solid ${copied === 'pb' ? A : BORDER}`,
+                  fontFamily: 'inherit', fontWeight: 600,
+                }}>{copied === 'pb' ? '✅' : 'Copiar'}</button>
+              </div>
+            </div>
+
+            {/* Option 3 */}
+            <div className="fade-up" style={{
+              background: CARD, border: `1px solid ${BORDER}`, padding: 20,
+              animationDelay: '160ms',
+            }}>
+              <h3 style={{ color: A, fontSize: 14, fontWeight: 700, marginBottom: 12 }}>
                 Opção 3: Execução direta
               </h3>
-              <p style={{ fontSize: '12px', color: '#999', lineHeight: 1.6 }}>
-                Abre o ficheiro do script, copia todo o conteúdo (<code style={{ color: ACCENT }}>Ctrl+A</code> → <code style={{ color: ACCENT }}>Ctrl+C</code>)
-                e cola diretamente na caixa de texto do executor. Carrega em Execute/Run.
+              <p style={{ fontSize: 12, color: '#999', lineHeight: 1.7 }}>
+                Abre o ficheiro, copia tudo (<code style={{ color: A }}>Ctrl+A → Ctrl+C</code>) e
+                cola diretamente na caixa do executor. Carrega Execute.
               </p>
             </div>
-            <div
-              className="anim-fade"
-              style={{ ...styles.card, animationDelay: '240ms' }}
-            >
-              <h3 style={{ color: '#f59e0b', fontSize: '14px', fontWeight: 700, marginBottom: '10px' }}>
+
+            {/* Notes */}
+            <div className="fade-up" style={{
+              background: CARD, border: `1px solid #f59e0b33`, padding: 20,
+              animationDelay: '240ms',
+            }}>
+              <h3 style={{ color: '#f59e0b', fontSize: 14, fontWeight: 700, marginBottom: 10 }}>
                 ⚠️ Notas Importantes
               </h3>
-              <ul style={{ fontSize: '12px', color: '#999', lineHeight: 1.8, listStyle: 'none', padding: 0 }}>
-                <li>▸ <strong style={{ color: TEXT }}>Silent Aim</strong> requer executor com suporte a <code style={{ color: ACCENT }}>hookmetamethod</code></li>
-                <li>▸ <strong style={{ color: TEXT }}>Trigger Bot</strong> usa <code style={{ color: ACCENT }}>VirtualInputManager</code> + fallback <code style={{ color: ACCENT }}>mouse1click()</code></li>
-                <li>▸ <strong style={{ color: TEXT }}>Fullbright</strong> guarda a lighting original e restaura-a no eject</li>
-                <li>▸ <strong style={{ color: TEXT }}>Panic Key (End)</strong> desativa TUDO de uma vez — use em emergências</li>
-                <li>▸ O script limpa-se sozinho no eject (BodyVelocity, BodyGyro, ESP, Hitboxes, etc.)</li>
+              <ul style={{ fontSize: 12, color: '#999', lineHeight: 2, listStyle: 'none', padding: 0 }}>
+                <li>▸ <b style={{ color: TEXT }}>Silent Aim</b> requer <code style={{ color: A }}>hookmetamethod</code></li>
+                <li>▸ <b style={{ color: TEXT }}>Trigger Bot</b> usa <code style={{ color: A }}>VirtualInputManager</code> + fallback</li>
+                <li>▸ <b style={{ color: TEXT }}>Fullbright</b> guarda lighting original e restaura no eject</li>
+                <li>▸ <b style={{ color: TEXT }}>Panic Key (End)</b> desativa TUDO de uma vez</li>
+                <li>▸ O script limpa-se sozinho no eject (BodyVelocity, BodyGyro, ESP, etc.)</li>
               </ul>
             </div>
           </div>
         )}
 
-        {/* ══════ COMPAT TAB ══════ */}
-        {activeTab === 'compat' && (
-          <div style={{ padding: '24px 0 48px' }}>
-            <p className="anim-fade" style={{ fontSize: '13px', color: MUTED, marginBottom: '20px' }}>
-              Testado e compatível com os executores mais populares. Silent Aim requer suporte a <code style={{ color: ACCENT }}>hookmetamethod</code>.
+        {/* ─── TAB 3: Compatibility ─── */}
+        {tab === 3 && (
+          <div style={{ padding: '20px 0 48px' }}>
+            <p style={{ fontSize: 13, color: DIM, marginBottom: 18 }}>
+              Compatível com os executores mais populares. Silent Aim requer <code style={{ color: A }}>hookmetamethod</code>.
             </p>
+
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))',
-              gap: '8px',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+              gap: 6,
             }}>
-              {executors.map((exec, i) => (
-                <ExecutorCard key={exec.name} name={exec.name} delay={i * 40} />
+              {executors.map((name, i) => (
+                <div key={name} className="fade-up" style={{
+                  padding: '12px 14px',
+                  background: CARD, border: `1px solid ${BORDER}`,
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  animationDelay: `${i * 40}ms`,
+                }}>
+                  <span style={{
+                    width: 8, height: 8, background: '#22c55e', borderRadius: '50%',
+                    flexShrink: 0,
+                  }} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#ccc' }}>{name}</span>
+                  <span style={{ marginLeft: 'auto', fontSize: 10, color: '#22c55e', fontWeight: 600 }}>✓</span>
+                </div>
               ))}
             </div>
-            <div
-              className="anim-fade"
-              style={{ ...styles.card, marginTop: '20px', animationDelay: '400ms' }}
-            >
-              <h3 style={{ color: ACCENT, fontSize: '14px', fontWeight: 700, marginBottom: '10px' }}>
+
+            {/* Compat table */}
+            <div className="fade-up" style={{
+              background: CARD, border: `1px solid ${BORDER}`, padding: 20,
+              marginTop: 18, animationDelay: '400ms',
+            }}>
+              <h3 style={{ color: A, fontSize: 14, fontWeight: 700, marginBottom: 12 }}>
                 Funcionalidades por Executor
               </h3>
-              <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ color: MUTED, borderBottom: `1px solid ${BORDER}` }}>
-                    <th style={{ textAlign: 'left', padding: '8px 4px', fontWeight: 600 }}>Feature</th>
-                    <th style={{ textAlign: 'center', padding: '8px 4px', fontWeight: 600 }}>Básico</th>
-                    <th style={{ textAlign: 'center', padding: '8px 4px', fontWeight: 600 }}>hookmetamethod</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    ['ESP / Fly / Noclip / Speed', '✅', '—'],
-                    ['Aimbot Normal', '✅', '—'],
-                    ['Silent Aim', '❌', '✅'],
-                    ['Trigger Bot', '⚠️ mouse1click', '✅ VIM'],
-                    ['Hitbox Expander', '✅', '—'],
-                    ['Player List', '✅', '—'],
-                  ].map(([feat, basic, hook], i) => (
-                    <tr key={i} style={{ borderBottom: `1px solid ${BORDER}11`, color: '#999' }}>
-                      <td style={{ padding: '6px 4px' }}>{feat}</td>
-                      <td style={{ padding: '6px 4px', textAlign: 'center' }}>{basic}</td>
-                      <td style={{ padding: '6px 4px', textAlign: 'center' }}>{hook}</td>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ color: DIM, borderBottom: `1px solid ${BORDER}` }}>
+                      <th style={{ textAlign: 'left', padding: '8px 6px', fontWeight: 600 }}>Feature</th>
+                      <th style={{ textAlign: 'center', padding: '8px 6px', fontWeight: 600 }}>Básico</th>
+                      <th style={{ textAlign: 'center', padding: '8px 6px', fontWeight: 600 }}>hookmetamethod</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {[
+                      ['ESP / Fly / Noclip / Speed', '✅', '—'],
+                      ['Aimbot Normal', '✅', '—'],
+                      ['Silent Aim', '❌', '✅'],
+                      ['Trigger Bot', '⚠️ mouse1click', '✅ VIM'],
+                      ['Hitbox Expander', '✅', '—'],
+                      ['Player List + Actions', '✅', '—'],
+                      ['Crosshair / Watermark', '⚠️ Drawing lib', '✅'],
+                      ['Anti-AFK', '✅', '—'],
+                    ].map(([feat, basic, hook], i) => (
+                      <tr key={i} style={{ borderBottom: `1px solid ${BORDER}22`, color: '#999' }}>
+                        <td style={{ padding: '7px 6px' }}>{feat}</td>
+                        <td style={{ padding: '7px 6px', textAlign: 'center' }}>{basic}</td>
+                        <td style={{ padding: '7px 6px', textAlign: 'center' }}>{hook}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
-      </div>
+      </main>
 
-      {/* ══════ FOOTER ══════ */}
+      {/* ═══════ FOOTER ═══════ */}
       <footer style={{
-        textAlign: 'center', padding: '32px 20px',
+        textAlign: 'center', padding: '28px 20px',
         borderTop: `1px solid ${BORDER}`,
+        marginTop: 'auto',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '16px' }}>🐍</span>
-          <span style={{ fontSize: '12px', color: '#444', fontWeight: 700 }}>MEDUSA v9.0 FINAL</span>
-          <span style={{ fontSize: '11px', color: '#333' }}>—</span>
-          <span style={{ fontSize: '11px', color: '#555' }}>Made by .donatorexe.</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <span style={{ fontSize: 15 }}>🐍</span>
+          <span style={{ fontSize: 12, color: '#444', fontWeight: 700 }}>MEDUSA v9.0 FINAL</span>
+          <span style={{ fontSize: 11, color: '#333' }}>—</span>
+          <span style={{ fontSize: 11, color: '#555' }}>Made by .donatorexe.</span>
         </div>
-        <p style={{ fontSize: '10px', color: '#333', marginTop: '8px' }}>
-          Apenas para fins educacionais. Use por sua conta e risco.
+        <p style={{ fontSize: 10, color: '#333', marginTop: 6 }}>
+          Apenas para fins educacionais.
         </p>
       </footer>
     </div>
   );
 }
 
-// ═══════════════════════════════════════════════════════════
-//  SUB-COMPONENTS
-// ═══════════════════════════════════════════════════════════
-
-function BindRow({ keyName, action, icon, delay }: {
-  keyName: string; action: string; icon: string; delay: number;
+/* ═════════════════════════════════════════════════════════════
+   FEATURE CARD
+   ═════════════════════════════════════════════════════════════ */
+function FeatureCard({ cat, col, items, delay }: {
+  cat: string; col: string; items: string[]; delay: number;
 }) {
-  const [hovered, setHovered] = useState(false);
+  const [hover, setHover] = useState(false);
   return (
     <div
-      className="anim-fade"
+      className="fade-up"
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
       style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 14px',
-        background: hovered ? '#111120' : BG_CARD,
-        border: `1px solid ${hovered ? ACCENT_MED : BORDER}`,
+        background: hover ? '#111120' : CARD,
+        border: `1px solid ${hover ? col + '55' : BORDER}`,
+        padding: 18,
         animationDelay: `${delay}ms`,
-        transition: 'all 0.15s',
+        transition: 'all 0.2s',
+        cursor: 'default',
       }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span style={{ fontSize: '14px', width: '20px', textAlign: 'center' }}>{icon}</span>
-        <span style={{ fontSize: '12px', color: hovered ? TEXT : '#aaa' }}>{action}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        <div style={{ width: 3, height: 16, background: col, flexShrink: 0 }} />
+        <h3 style={{ color: col, fontSize: 13, fontWeight: 700, flex: 1 }}>{cat}</h3>
+        <span style={{
+          fontSize: 10, color: DIM, padding: '1px 8px',
+          border: `1px solid ${col}33`, background: `${col}08`,
+        }}>{items.length}</span>
       </div>
-      <span style={styles.tag}>{keyName}</span>
-    </div>
-  );
-}
-
-function HowToCard({ title, delay, steps, code }: {
-  title: string; delay: number;
-  steps: React.ReactNode[]; code: string;
-}) {
-  return (
-    <div
-      className="anim-fade"
-      style={{ ...styles.card, animationDelay: `${delay}ms` }}
-    >
-      <h3 style={{ color: ACCENT, fontSize: '14px', fontWeight: 700, marginBottom: '12px' }}>
-        {title}
-      </h3>
-      <ol style={{
-        display: 'flex', flexDirection: 'column', gap: '6px',
-        fontSize: '12px', color: '#999', listStyle: 'none', padding: 0, margin: 0,
-      }}>
-        {steps.map((step, i) => (
-          <li key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-            <span style={{ color: ACCENT, fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
-            <span>{step}</span>
+      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {items.map((item, i) => (
+          <li key={i} style={{ display: 'flex', gap: 7, fontSize: 12, color: '#999', lineHeight: 1.5 }}>
+            <span style={{ color: col, flexShrink: 0, fontSize: 10, marginTop: 2 }}>▸</span>
+            <span>{item}</span>
           </li>
         ))}
-      </ol>
-      <div style={{ ...styles.codeBlock, marginTop: '12px' }}>
-        <code>{code}</code>
-        <div style={{ position: 'absolute', top: '8px', right: '8px' }}>
-          <CopyButton text={code} label="Copiar" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ExecutorCard({ name, delay }: { name: string; delay: number }) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <div
-      className="anim-fade"
-      style={{
-        padding: '14px 16px',
-        background: hovered ? '#111120' : BG_CARD,
-        border: `1px solid ${hovered ? '#22c55e55' : BORDER}`,
-        display: 'flex', alignItems: 'center', gap: '10px',
-        animationDelay: `${delay}ms`,
-        transition: 'all 0.15s', cursor: 'default',
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <span style={{
-        width: '8px', height: '8px', background: '#22c55e',
-        borderRadius: '50%', flexShrink: 0,
-        boxShadow: hovered ? '0 0 8px #22c55e66' : 'none',
-        transition: 'box-shadow 0.2s',
-      }} />
-      <span style={{ fontSize: '13px', fontWeight: 600, color: hovered ? TEXT : '#ccc' }}>{name}</span>
-      <span style={{ marginLeft: 'auto', fontSize: '10px', color: '#22c55e', fontWeight: 600 }}>✓</span>
+      </ul>
     </div>
   );
 }

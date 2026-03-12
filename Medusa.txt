@@ -2,8 +2,8 @@
 -- ║                    MEDUSA v9.0 — Ultimate Edition                    ║
 -- ║                      Made by .donatorexe.                            ║
 -- ║                                                                      ║
--- ║  Para usar com loadstring:                                           ║
--- ║  loadstring(game:HttpGet("URL_DO_RAW"))()                           ║
+-- ║                                                                      ║
+-- ║                                                                      ║
 -- ╚══════════════════════════════════════════════════════════════════════╝
 
 -- ─── POLYFILL ──────────────────────────────────────────────
